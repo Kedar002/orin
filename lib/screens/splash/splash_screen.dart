@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../onboarding/onboarding_screen.dart';
 
 /// Splash screen with minimal fade animation
@@ -67,10 +68,11 @@ class _SplashScreenState extends State<SplashScreen>
               // Logo placeholder (text for now)
               Text(
                 'ORIN',
-                style: theme.textTheme.displayLarge?.copyWith(
+                style: GoogleFonts.orbitron(
                   fontSize: 48,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
+                  letterSpacing: 8,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 16),
