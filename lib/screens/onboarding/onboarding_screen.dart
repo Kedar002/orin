@@ -165,6 +165,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Image.asset(
             page.imagePath,
             fit: BoxFit.cover,
+            alignment: const Alignment(-0.4, 0), // Slightly shifted to the right
             width: double.infinity,
             height: double.infinity,
           ),
