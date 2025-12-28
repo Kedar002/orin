@@ -659,6 +659,254 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
           child: Column(
             children: [
               _buildSheetHandle(isDark),
+
+              // Simple Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'AI Summary',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 28,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.close, size: 18, color: isDark ? Colors.white70 : Colors.black54),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Today's Summary - Clean paragraph
+                      Text(
+                        'Normal activity detected throughout the day. 47 people entered, 45 exited. Peak traffic at 9:15 AM and 5:30 PM. No security incidents reported.',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          height: 1.6,
+                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // Key Moments - No card, just list
+                      _buildKeyMoment(
+                        '9:15 AM',
+                        'Peak Entry Traffic',
+                        '23 people detected entering',
+                        Icons.trending_up,
+                        AppColors.success,
+                        theme,
+                        isDark,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildKeyMoment(
+                        '2:34 PM',
+                        'Delivery Vehicle',
+                        'Truck detected at loading dock',
+                        Icons.local_shipping_outlined,
+                        isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+                        theme,
+                        isDark,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildKeyMoment(
+                        '5:30 PM',
+                        'Peak Exit Traffic',
+                        '28 people detected exiting',
+                        Icons.trending_down,
+                        AppColors.warning,
+                        theme,
+                        isDark,
+                      ),
+
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // Stats - Simple list
+                      _buildDetectionStat(Icons.person_outline, 'People', '92', theme, isDark),
+                      Divider(height: AppSpacing.lg, color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
+                      _buildDetectionStat(Icons.directions_car_outlined, 'Vehicles', '14', theme, isDark),
+                      Divider(height: AppSpacing.lg, color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
+                      _buildDetectionStat(Icons.pets_outlined, 'Animals', '2', theme, isDark),
+                      Divider(height: AppSpacing.lg, color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
+                      _buildDetectionStat(Icons.warning_amber_outlined, 'Alerts', '0', theme, isDark),
+
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // Quick Questions - Simple chips
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildQuickQuestion('What happened at 2 PM?', theme, isDark),
+                          _buildQuickQuestion('Show unusual activity', theme, isDark),
+                          _buildQuickQuestion('Who entered today?', theme, isDark),
+                          _buildQuickQuestion('Compare with yesterday', theme, isDark),
+                        ],
+                      ),
+
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // Chat Option - Simple row
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showAIChatSheet(theme, isDark);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              top: BorderSide(color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
+                              bottom: BorderSide(color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.chat_bubble_outline, size: 22, color: isDark ? Colors.white70 : Colors.black54),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: Text(
+                                  'Ask AI Anything',
+                                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                              Icon(Icons.chevron_right, size: 20, color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKeyMoment(String time, String title, String description, IconData icon, Color color, ThemeData theme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Simple time
+          SizedBox(
+            width: 60,
+            child: Text(
+              time,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          // Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetectionStat(IconData icon, String label, String value, ThemeData theme, bool isDark) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+            ),
+          ),
+        ),
+        Text(value, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+
+  Widget _buildQuickQuestion(String question, ThemeData theme, bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        // Handle quick question tap
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          question,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAIChatSheet(ThemeData theme, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              _buildSheetHandle(isDark),
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Row(
@@ -670,16 +918,16 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                         color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(Icons.auto_awesome, size: 18, color: isDark ? Colors.white70 : Colors.black54),
+                      child: Icon(Icons.chat_bubble_outline, size: 18, color: isDark ? Colors.white70 : Colors.black54),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('AI Assistant', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                          Text('AI Chat', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                           Text(
-                            'Ask about this camera',
+                            'Ask anything about this camera',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                             ),
