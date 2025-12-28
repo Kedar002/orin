@@ -77,7 +77,8 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                     _buildActionButtons(),
                     const Divider(
                       color: SecurityColors.divider,
-                      height: 1,
+                      height: 8,
+                      thickness: 1,
                     ),
                     _buildRelatedCameras(),
                   ],
@@ -301,7 +302,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
 
   Widget _buildCameraInfo() {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -309,54 +310,17 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
             widget.cameraName,
             style: const TextStyle(
               color: SecurityColors.primaryText,
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                '${widget.cameraId} • ${widget.location}',
-                style: const TextStyle(
-                  color: SecurityColors.secondaryText,
-                  fontSize: 13,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: SecurityColors.statusOnline.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: SecurityColors.statusOnline,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Text(
-                      'Online',
-                      style: TextStyle(
-                        color: SecurityColors.statusOnline,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          const SizedBox(height: 4),
+          Text(
+            '${widget.cameraId} • ${widget.location}',
+            style: const TextStyle(
+              color: SecurityColors.secondaryText,
+              fontSize: 13,
+            ),
           ),
         ],
       ),
@@ -365,48 +329,54 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
 
   Widget _buildActionButtons() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildActionButton(Icons.camera_alt_outlined, 'Snapshot'),
-          _buildActionButton(Icons.download_outlined, 'Download'),
-          _buildActionButton(Icons.settings_outlined, 'Settings'),
-          _buildActionButton(Icons.share_outlined, 'Share'),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildActionButton(Icons.camera_alt_outlined, 'Snapshot'),
+            const SizedBox(width: 8),
+            _buildActionButton(Icons.download_outlined, 'Download'),
+            const SizedBox(width: 8),
+            _buildActionButton(Icons.share_outlined, 'Share'),
+            const SizedBox(width: 8),
+            _buildActionButton(Icons.auto_awesome, 'Summarize'),
+            const SizedBox(width: 8),
+            _buildActionButton(Icons.more_horiz, 'Other'),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildActionButton(IconData icon, String label) {
-    return Column(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: SecurityColors.secondarySurface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: SecurityColors.divider,
-              width: 1,
-            ),
-          ),
-          child: Icon(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: SecurityColors.secondarySurface,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
             icon,
             color: SecurityColors.primaryText,
-            size: 20,
+            size: 18,
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            color: SecurityColors.secondaryText,
-            fontSize: 11,
-          ),
-        ),
-      ],
+          if (label.isNotEmpty) ...[
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: SecurityColors.primaryText,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -415,12 +385,12 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Text(
             'Other Cameras',
             style: TextStyle(
               color: SecurityColors.primaryText,
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -454,14 +424,14 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Thumbnail
             Container(
-              width: 120,
-              height: 68,
+              width: 110,
+              height: 62,
               decoration: BoxDecoration(
                 color: SecurityColors.secondarySurface,
                 borderRadius: BorderRadius.circular(8),
@@ -477,17 +447,17 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                       child: Icon(
                         Icons.videocam_outlined,
                         color: Colors.black.withOpacity(0.1),
-                        size: 32,
+                        size: 28,
                       ),
                     ),
                   ),
                   Positioned(
-                    bottom: 4,
-                    right: 4,
+                    bottom: 3,
+                    right: 3,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2,
+                        horizontal: 3,
+                        vertical: 1,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.8),
@@ -497,7 +467,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                         'LIVE',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: 9,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -506,7 +476,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             // Info
             Expanded(
               child: Column(
@@ -516,30 +486,27 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                     camera['name']!,
                     style: const TextStyle(
                       color: SecurityColors.primaryText,
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     '${camera['id']} • ${camera['location']}',
                     style: const TextStyle(
                       color: SecurityColors.secondaryText,
-                      fontSize: 12,
+                      fontSize: 11,
                     ),
                   ),
                 ],
               ),
             ),
-            IconButton(
-              icon: const Icon(
-                Icons.more_vert,
-                color: SecurityColors.secondaryText,
-                size: 20,
-              ),
-              onPressed: () {},
+            Icon(
+              Icons.more_vert,
+              color: SecurityColors.secondaryText,
+              size: 18,
             ),
           ],
         ),
