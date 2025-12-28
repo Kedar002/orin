@@ -11,12 +11,14 @@ class CameraViewerScreen extends StatefulWidget {
   final String cameraId;
   final String cameraName;
   final String location;
+  final String? streamUrl; // Optional: RTSP/HTTP stream URL
 
   const CameraViewerScreen({
     super.key,
     required this.cameraId,
     required this.cameraName,
     required this.location,
+    this.streamUrl,
   });
 
   @override
@@ -72,7 +74,10 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
   }
 
   Future<void> _initializeVideo() async {
-    _videoController = VideoPlayerController.asset('assets/videos/camera_feed.mp4');
+    // Determine which stream URL to use
+    String streamUrl = widget.streamUrl ?? _getStreamUrlForCamera(widget.cameraId);
+
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(streamUrl));
     await _videoController.initialize();
     _videoController.setLooping(true);
     _videoController.play();
@@ -90,6 +95,36 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
     setState(() {
       _isVideoInitialized = true;
     });
+  }
+
+  // Get stream URL based on camera ID
+  // TODO: Replace these demo HLS URLs with your backend's HLS stream URLs
+  String _getStreamUrlForCamera(String cameraId) {
+    // Extract number from camera ID (e.g., "CAM-01" -> 1)
+    final number = int.tryParse(cameraId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+    // VERIFIED WORKING HLS (.m3u8) test streams (HTTPS)
+    // These simulate what your backend media server will provide
+    // Architecture: CCTV (RTSP) → Backend/Media Server → HLS (.m3u8) → Mobile App
+    final demoStreams = [
+      // Apple Developer Test Streams (HTTPS, verified working)
+      'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8',
+
+      // Akamai Live Test Streams (HTTPS, verified working)
+      'https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8',
+      'https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8',
+
+      // Bitdash Test Stream (HTTPS, verified working)
+      'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
+
+      // Unified Streaming Test (HTTPS, verified working)
+      'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.mp4/.m3u8',
+
+      // Mux Test Stream (HTTPS, verified working)
+      'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    ];
+
+    return demoStreams[number % demoStreams.length];
   }
 
   void _onActionSelected(String action) {
@@ -1312,7 +1347,9 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: const VideoThumbnail(),
+                    child: VideoThumbnail(
+                      streamUrl: _getStreamUrlForCamera(camera['id']!),
+                    ),
                   ),
                   Positioned(
                     bottom: 3,

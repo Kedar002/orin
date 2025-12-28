@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 /// Reusable video thumbnail widget
-/// Shows a paused frame from the video
+/// Shows a paused frame from the video stream
 class VideoThumbnail extends StatefulWidget {
-  const VideoThumbnail({super.key});
+  final String? streamUrl;
+
+  const VideoThumbnail({
+    super.key,
+    this.streamUrl,
+  });
 
   @override
   State<VideoThumbnail> createState() => _VideoThumbnailState();
@@ -21,7 +26,11 @@ class _VideoThumbnailState extends State<VideoThumbnail> {
   }
 
   Future<void> _initializeVideo() async {
-    _controller = VideoPlayerController.asset('assets/videos/camera_feed.mp4');
+    // Default HLS demo stream if none provided
+    final streamUrl = widget.streamUrl ??
+        'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8';
+
+    _controller = VideoPlayerController.networkUrl(Uri.parse(streamUrl));
     await _controller.initialize();
     // Seek to a specific frame for thumbnail
     await _controller.seekTo(const Duration(seconds: 2));

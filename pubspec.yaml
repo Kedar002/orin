@@ -64,7 +64,6 @@ flutter:
     - assets/images/onboarding_1.jpeg
     - assets/images/onboarding_2.jpeg
     - assets/images/onboarding_3.jpeg
-    - assets/videos/camera_feed.mp4
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

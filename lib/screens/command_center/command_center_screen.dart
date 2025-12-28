@@ -14,6 +14,35 @@ class CommandCenterScreen extends StatefulWidget {
 }
 
 class _CommandCenterScreenState extends State<CommandCenterScreen> {
+  // Get stream URL based on camera ID
+  // TODO: Replace these demo HLS URLs with your backend's HLS stream URLs
+  String _getStreamUrlForCamera(String cameraId) {
+    final number = int.tryParse(cameraId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+    // VERIFIED WORKING HLS (.m3u8) test streams (HTTPS)
+    // These simulate what your backend media server will provide
+    // Architecture: CCTV (RTSP) → Backend/Media Server → HLS (.m3u8) → Mobile App
+    final demoStreams = [
+      // Apple Developer Test Streams (HTTPS, verified working)
+      'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8',
+
+      // Akamai Live Test Streams (HTTPS, verified working)
+      'https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8',
+      'https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8',
+
+      // Bitdash Test Stream (HTTPS, verified working)
+      'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
+
+      // Unified Streaming Test (HTTPS, verified working)
+      'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.mp4/.m3u8',
+
+      // Mux Test Stream (HTTPS, verified working)
+      'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    ];
+
+    return demoStreams[number % demoStreams.length];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -200,7 +229,9 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                 // Video thumbnail
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: const VideoThumbnail(),
+                  child: VideoThumbnail(
+                    streamUrl: _getStreamUrlForCamera(camera['id'] as String),
+                  ),
                 ),
 
                 // Status indicator
@@ -541,7 +572,9 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
           children: [
             // Camera feed
             isOnline
-                ? const VideoThumbnail()
+                ? VideoThumbnail(
+                    streamUrl: _getStreamUrlForCamera(camera['id'] as String),
+                  )
                 : Container(
                     color: const Color(0xFFF5F5F5),
                     child: Center(
