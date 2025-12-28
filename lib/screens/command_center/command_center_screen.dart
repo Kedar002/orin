@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
+import '../../core/widgets/video_thumbnail.dart';
 import '../../core/theme/app_colors.dart';
 import '../cameras/camera_viewer_screen.dart';
 import '../cameras/cameras_grid_screen.dart';
@@ -255,16 +256,27 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               ),
               child: Stack(
                 children: [
-                  // Placeholder
-                  Center(
-                    child: Icon(
-                      Icons.videocam_outlined,
-                      size: 48,
-                      color: isDark
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.black.withOpacity(0.08),
+                  // Video Thumbnail
+                  if (isActive)
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      child: VideoThumbnail(
+                        streamUrl: _getStreamUrlForCamera(camera['id']),
+                      ),
+                    )
+                  else
+                    // Placeholder for offline cameras
+                    Center(
+                      child: Icon(
+                        Icons.videocam_outlined,
+                        size: 48,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.1)
+                            : Colors.black.withOpacity(0.08),
+                      ),
                     ),
-                  ),
 
                   // Live indicator
                   if (isActive)
