@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/security_colors.dart';
+import '../../core/widgets/video_thumbnail.dart';
 import '../cameras/camera_viewer_screen.dart';
 
 /// Command Center - YouTube-style home feed
@@ -196,19 +197,10 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               ),
               child: Stack(
               children: [
-                // Feed placeholder
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.videocam_outlined,
-                      color: Colors.black.withOpacity(0.1),
-                      size: 48,
-                    ),
-                  ),
+                // Video thumbnail
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: const VideoThumbnail(),
                 ),
 
                 // Status indicator
@@ -548,20 +540,18 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
           fit: StackFit.expand,
           children: [
             // Camera feed
-            Container(
-              color: const Color(0xFFF5F5F5),
-              child: Center(
-                child: Icon(
-                  isOnline
-                      ? Icons.videocam_outlined
-                      : Icons.videocam_off_outlined,
-                  color: isOnline
-                      ? Colors.black.withOpacity(0.1)
-                      : SecurityColors.statusOffline.withOpacity(0.2),
-                  size: 32,
-                ),
-              ),
-            ),
+            isOnline
+                ? const VideoThumbnail()
+                : Container(
+                    color: const Color(0xFFF5F5F5),
+                    child: Center(
+                      child: Icon(
+                        Icons.videocam_off_outlined,
+                        color: SecurityColors.statusOffline.withOpacity(0.2),
+                        size: 32,
+                      ),
+                    ),
+                  ),
 
             // Status indicator
             Positioned(

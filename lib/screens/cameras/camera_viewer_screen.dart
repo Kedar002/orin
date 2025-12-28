@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:video_player/video_player.dart';
 import '../../core/constants/security_colors.dart';
+import '../../core/widgets/video_thumbnail.dart';
 
 /// YouTube-style Camera Viewing Screen
 /// Full-screen video player with controls and related cameras
@@ -24,7 +26,7 @@ class CameraViewerScreen extends StatefulWidget {
 class _CameraViewerScreenState extends State<CameraViewerScreen> {
   bool _showControls = true;
   bool _isPlaying = true;
-  double _progress = 0.3; // Mock progress
+  double _progress = 0.0;
   String _selectedAction = 'other'; // Default: other cameras
   final TextEditingController _chatController = TextEditingController();
   final List<Map<String, dynamic>> _chatMessages = [
@@ -34,6 +36,10 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
       'time': '10:30 AM',
     },
   ];
+  late VideoPlayerController _videoController;
+  bool _isVideoInitialized = false;
+  final ScrollController _scrollController = ScrollController();
+  double _videoScale = 1.0; // 1.0 = full width, smaller when scrolled
 
   @override
   void initState() {
@@ -44,6 +50,46 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    _initializeVideo();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    // YouTube-style: video shrinks as you scroll
+    // At 0 scroll = full width (scale 1.0)
+    // At 150 scroll = small width (scale 0.35 for portrait videos)
+    const maxScroll = 150.0;
+    const minScale = 0.35;
+
+    final scrollOffset = _scrollController.offset.clamp(0.0, maxScroll);
+    final scale = 1.0 - (scrollOffset / maxScroll * (1.0 - minScale));
+
+    if ((_videoScale - scale).abs() > 0.01) {
+      setState(() {
+        _videoScale = scale;
+      });
+    }
+  }
+
+  Future<void> _initializeVideo() async {
+    _videoController = VideoPlayerController.asset('assets/videos/camera_feed.mp4');
+    await _videoController.initialize();
+    _videoController.setLooping(true);
+    _videoController.play();
+
+    _videoController.addListener(() {
+      if (_videoController.value.isInitialized) {
+        setState(() {
+          _progress = _videoController.value.position.inMilliseconds /
+              _videoController.value.duration.inMilliseconds;
+          _isPlaying = _videoController.value.isPlaying;
+        });
+      }
+    });
+
+    setState(() {
+      _isVideoInitialized = true;
+    });
   }
 
   void _onActionSelected(String action) {
@@ -58,11 +104,18 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
       DeviceOrientation.portraitUp,
     ]);
     _chatController.dispose();
+    _videoController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   void _togglePlayPause() {
     setState(() {
+      if (_videoController.value.isPlaying) {
+        _videoController.pause();
+      } else {
+        _videoController.play();
+      }
       _isPlaying = !_isPlaying;
     });
   }
@@ -80,12 +133,13 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Video player section
+            // Video player section with scale
             _buildVideoPlayer(),
 
-            // Camera info and controls
+            // Camera info and controls - scrollable
             Expanded(
               child: SingleChildScrollView(
+                controller: _scrollController,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -108,26 +162,35 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
   }
 
   Widget _buildVideoPlayer() {
-    return GestureDetector(
-      onTap: _toggleControls,
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: Container(
-          color: Colors.black,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Video placeholder (will be replaced with actual video)
-              Container(
-                color: Colors.black,
-                child: Center(
-                  child: Icon(
-                    Icons.videocam,
-                    color: Colors.white.withOpacity(0.3),
-                    size: 80,
-                  ),
-                ),
-              ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final videoWidth = screenWidth * _videoScale;
+
+    return Container(
+      width: double.infinity,
+      color: Colors.black,
+      child: Center(
+        child: GestureDetector(
+          onTap: _toggleControls,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 100),
+            curve: Curves.easeOut,
+            width: videoWidth,
+            child: AspectRatio(
+              aspectRatio: _isVideoInitialized ? _videoController.value.aspectRatio : 16 / 9,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Video player
+                  _isVideoInitialized
+                      ? VideoPlayer(_videoController)
+                      : Container(
+                          color: Colors.black,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: SecurityColors.accent,
+                            ),
+                          ),
+                        ),
 
               // Gradient overlay
               if (_showControls)
@@ -246,11 +309,20 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
             ],
           ),
         ),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildVideoControls() {
+    final position = _isVideoInitialized
+        ? _videoController.value.position
+        : Duration.zero;
+    final duration = _isVideoInitialized
+        ? _videoController.value.duration
+        : Duration.zero;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Column(
@@ -260,7 +332,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
           Row(
             children: [
               Text(
-                '5:23',
+                _formatDuration(position),
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
                   fontSize: 12,
@@ -279,21 +351,24 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                     ),
                   ),
                   child: Slider(
-                    value: _progress,
+                    value: _progress.clamp(0.0, 1.0),
                     onChanged: (value) {
                       setState(() {
                         _progress = value;
+                        final duration = _videoController.value.duration;
+                        final newPosition = duration * value;
+                        _videoController.seekTo(newPosition);
                       });
                     },
-                    activeColor: SecurityColors.statusOffline,
+                    activeColor: SecurityColors.accent,
                     inactiveColor: Colors.white.withOpacity(0.3),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                '18:45',
-                style: TextStyle(
+              Text(
+                _formatDuration(duration),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
                 ),
@@ -1190,6 +1265,13 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
     );
   }
 
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
+  }
+
   Widget _buildRelatedCameraItem(int index) {
     final cameras = [
       {'id': 'CAM-02', 'name': 'Parking Lot A', 'location': 'Level 1'},
@@ -1228,18 +1310,9 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
               ),
               child: Stack(
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.videocam_outlined,
-                        color: Colors.black.withOpacity(0.1),
-                        size: 28,
-                      ),
-                    ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: const VideoThumbnail(),
                   ),
                   Positioned(
                     bottom: 3,
