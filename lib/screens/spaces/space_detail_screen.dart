@@ -458,6 +458,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
     ];
 
     IconData selectedIcon = Icons.folder_outlined;
+    final nameController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -503,6 +504,8 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
                 const SizedBox(height: AppSpacing.xl),
 
                 TextField(
+                  controller: nameController,
+                  autofocus: true,
                   decoration: const InputDecoration(
                     labelText: 'Name',
                     hintText: 'e.g., Floor 1',
@@ -557,8 +560,31 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
+                      final name = nameController.text.trim();
+                      if (name.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please enter a name')),
+                        );
+                        return;
+                      }
+
+                      // Add the new sub-space
+                      setState(() {
+                        final newSubSpace = SpaceItem(
+                          id: 'SPACE-${DateTime.now().millisecondsSinceEpoch}',
+                          name: name,
+                          icon: selectedIcon,
+                          color: const Color(0xFF6B4CE6),
+                          level: _currentSpace.level + 1,
+                        );
+                        _currentSpace.subSpaces.add(newSubSpace);
+                      });
+
                       Navigator.of(context).pop();
-                      // Mock action
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Sub-space "$name" added')),
+                      );
                     },
                     child: const Text('Create Sub-space'),
                   ),
@@ -575,6 +601,9 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
   void _showAddCameraDialog() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    final nameController = TextEditingController();
+    final urlController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -619,6 +648,8 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
               const SizedBox(height: AppSpacing.xl),
 
               TextField(
+                controller: nameController,
+                autofocus: true,
                 decoration: const InputDecoration(
                   labelText: 'Name',
                   hintText: 'e.g., Main Entrance',
@@ -627,6 +658,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
               const SizedBox(height: AppSpacing.md),
 
               TextField(
+                controller: urlController,
                 decoration: const InputDecoration(
                   labelText: 'Stream URL',
                   hintText: 'rtsp:// or https://',
@@ -639,8 +671,40 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
+                    final name = nameController.text.trim();
+                    final url = urlController.text.trim();
+
+                    if (name.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter a name')),
+                      );
+                      return;
+                    }
+
+                    if (url.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter a stream URL')),
+                      );
+                      return;
+                    }
+
+                    // Add the new camera
+                    setState(() {
+                      final newCamera = CameraItem(
+                        id: 'CAM-${DateTime.now().millisecondsSinceEpoch}',
+                        name: name,
+                        location: _currentSpace.name,
+                        streamUrl: url,
+                        status: 'online',
+                      );
+                      _currentSpace.cameras.add(newCamera);
+                    });
+
                     Navigator.of(context).pop();
-                    // Mock action
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Camera "$name" added')),
+                    );
                   },
                   child: const Text('Add Camera'),
                 ),

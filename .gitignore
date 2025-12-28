@@ -108,3 +108,4 @@ app.*.map.json
 *.pem
 google-services.json
 GoogleService-Info.plist
+nul
