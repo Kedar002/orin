@@ -26,6 +26,14 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
   bool _isPlaying = true;
   double _progress = 0.3; // Mock progress
   String _selectedAction = 'other'; // Default: other cameras
+  final TextEditingController _chatController = TextEditingController();
+  final List<Map<String, dynamic>> _chatMessages = [
+    {
+      'isUser': false,
+      'message': 'Hello! I can help you analyze this camera feed. What would you like to know?',
+      'time': '10:30 AM',
+    },
+  ];
 
   @override
   void initState() {
@@ -49,6 +57,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
+    _chatController.dispose();
     super.dispose();
   }
 
@@ -510,6 +519,68 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          // Chat with AI button
+          GestureDetector(
+            onTap: _showChatBottomSheet,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: SecurityColors.secondarySurface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: SecurityColors.divider,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: SecurityColors.accent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.chat_bubble_outline,
+                      color: SecurityColors.accent,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Chat with AI',
+                          style: TextStyle(
+                            color: SecurityColors.primaryText,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Ask questions about this camera feed',
+                          style: TextStyle(
+                            color: SecurityColors.secondaryText,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    color: SecurityColors.secondaryText,
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -824,6 +895,296 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
             color: SecurityColors.secondaryText,
             size: 20,
           ),
+        ],
+      ),
+    );
+  }
+
+  void _showChatBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: SecurityColors.primaryBackground,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Column(
+              children: [
+                // Drag handle
+                Container(
+                  margin: const EdgeInsets.only(top: 8, bottom: 4),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: SecurityColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Header
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: SecurityColors.divider,
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: SecurityColors.accent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome,
+                          color: SecurityColors.accent,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AI Assistant',
+                              style: TextStyle(
+                                color: SecurityColors.primaryText,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              'Ask anything about this camera',
+                              style: TextStyle(
+                                color: SecurityColors.secondaryText,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close,
+                          color: SecurityColors.secondaryText,
+                          size: 24,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                // Messages
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _chatMessages.length,
+                    itemBuilder: (context, index) {
+                      final message = _chatMessages[index];
+                      return _buildChatMessage(
+                        message['message'],
+                        message['isUser'],
+                        message['time'],
+                      );
+                    },
+                  ),
+                ),
+                // Input field
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: SecurityColors.primaryBackground,
+                    border: Border(
+                      top: BorderSide(
+                        color: SecurityColors.divider,
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: SecurityColors.secondarySurface,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: SecurityColors.divider,
+                                width: 1,
+                              ),
+                            ),
+                            child: TextField(
+                              controller: _chatController,
+                              style: const TextStyle(
+                                color: SecurityColors.primaryText,
+                                fontSize: 14,
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: 'Ask a question...',
+                                hintStyle: TextStyle(
+                                  color: SecurityColors.secondaryText,
+                                  fontSize: 14,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                              maxLines: null,
+                              textInputAction: TextInputAction.send,
+                              onSubmitted: (value) => _sendMessage(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: _sendMessage,
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: const BoxDecoration(
+                              color: SecurityColors.accent,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.arrow_upward,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _sendMessage() {
+    if (_chatController.text.trim().isEmpty) return;
+
+    setState(() {
+      _chatMessages.add({
+        'isUser': true,
+        'message': _chatController.text,
+        'time': '10:${30 + _chatMessages.length} AM',
+      });
+
+      // Mock AI response
+      Future.delayed(const Duration(milliseconds: 500), () {
+        setState(() {
+          _chatMessages.add({
+            'isUser': false,
+            'message': 'I can help you with that. Based on the camera feed analysis, I can provide insights about activity patterns, detected objects, and security alerts.',
+            'time': '10:${31 + _chatMessages.length} AM',
+          });
+        });
+      });
+    });
+
+    _chatController.clear();
+  }
+
+  Widget _buildChatMessage(String message, bool isUser, String time) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isUser) ...[
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: SecurityColors.accent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: SecurityColors.accent,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Column(
+              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isUser
+                        ? SecurityColors.accent
+                        : SecurityColors.secondarySurface,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      color: isUser
+                          ? Colors.white
+                          : SecurityColors.primaryText,
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    time,
+                    style: const TextStyle(
+                      color: SecurityColors.secondaryText,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isUser) ...[
+            const SizedBox(width: 8),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: SecurityColors.secondaryText.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.person,
+                color: SecurityColors.secondaryText,
+                size: 16,
+              ),
+            ),
+          ],
         ],
       ),
     );
