@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/security_colors.dart';
-import '../../core/widgets/video_thumbnail.dart';
 import '../cameras/camera_viewer_screen.dart';
+import '../cameras/cameras_grid_screen.dart';
 
 /// Command Center - YouTube-style home feed
 /// Shows recent cameras, guards, events in scrollable feed
@@ -126,7 +126,13 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
           _buildSection(
             title: 'All Cameras',
             action: TextButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CamerasGridScreen(),
+                  ),
+                );
+              },
               child: const Text(
                 'View all',
                 style: TextStyle(
@@ -226,11 +232,27 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               ),
               child: Stack(
               children: [
-                // Video thumbnail
+                // Static placeholder (memory optimization - no live video in preview)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: VideoThumbnail(
-                    streamUrl: _getStreamUrlForCamera(camera['id'] as String),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          const Color(0xFF1a1a1a),
+                          const Color(0xFF2d2d2d),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.videocam,
+                        color: SecurityColors.accent.withOpacity(0.3),
+                        size: 40,
+                      ),
+                    ),
                   ),
                 ),
 
@@ -570,21 +592,33 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
           child: Stack(
           fit: StackFit.expand,
           children: [
-            // Camera feed
-            isOnline
-                ? VideoThumbnail(
-                    streamUrl: _getStreamUrlForCamera(camera['id'] as String),
-                  )
-                : Container(
-                    color: const Color(0xFFF5F5F5),
-                    child: Center(
-                      child: Icon(
-                        Icons.videocam_off_outlined,
-                        color: SecurityColors.statusOffline.withOpacity(0.2),
-                        size: 32,
-                      ),
-                    ),
-                  ),
+            // Static placeholder (memory optimization - no live video in grid)
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isOnline
+                      ? [
+                          const Color(0xFF1a1a1a),
+                          const Color(0xFF2d2d2d),
+                        ]
+                      : [
+                          const Color(0xFFF5F5F5),
+                          const Color(0xFFF5F5F5),
+                        ],
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  isOnline ? Icons.videocam : Icons.videocam_off_outlined,
+                  color: isOnline
+                      ? SecurityColors.accent.withOpacity(0.3)
+                      : SecurityColors.statusOffline.withOpacity(0.2),
+                  size: 32,
+                ),
+              ),
+            ),
 
             // Status indicator
             Positioned(
