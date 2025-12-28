@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/security_colors.dart';
+import '../cameras/camera_viewer_screen.dart';
 
 /// Command Center - YouTube-style home feed
 /// Shows recent cameras, guards, events in scrollable feed
@@ -168,20 +169,32 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
   }
 
   Widget _buildHorizontalCameraCard(Map<String, dynamic> camera) {
-    return Container(
-      width: 280,
-      margin: const EdgeInsets.only(right: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Camera preview
-          Container(
-            height: 158,
-            decoration: BoxDecoration(
-              color: SecurityColors.secondarySurface,
-              borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => CameraViewerScreen(
+              cameraId: camera['id'],
+              cameraName: camera['name'],
+              location: 'Main Building',
             ),
-            child: Stack(
+          ),
+        );
+      },
+      child: Container(
+        width: 280,
+        margin: const EdgeInsets.only(right: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Camera preview
+            Container(
+              height: 158,
+              decoration: BoxDecoration(
+                color: SecurityColors.secondarySurface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Stack(
               children: [
                 // Feed placeholder
                 Container(
@@ -278,6 +291,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -507,18 +521,30 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
   Widget _buildCameraGridCard(Map<String, dynamic> camera) {
     final isOnline = camera['isOnline'] as bool;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: SecurityColors.secondarySurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: SecurityColors.divider,
-          width: 1,
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => CameraViewerScreen(
+              cameraId: camera['id'],
+              cameraName: camera['name'],
+              location: camera['location'],
+            ),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: SecurityColors.secondarySurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: SecurityColors.divider,
+            width: 1,
+          ),
         ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Stack(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
           fit: StackFit.expand,
           children: [
             // Camera feed
@@ -582,6 +608,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
