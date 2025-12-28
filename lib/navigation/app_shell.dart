@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../screens/home/home_screen.dart';
+import '../screens/command_center/command_center_screen.dart';
 import '../screens/spaces/spaces_screen.dart';
 import '../screens/guards/guards_screen.dart';
 import '../screens/events/events_screen.dart';
 import '../screens/settings/settings_screen.dart';
 
 /// Main app shell with bottom tab navigation
-/// 5 tabs: Home | Spaces | Guards | Events | Settings
+/// 5 tabs: Command Center | Spaces | Guards | Events | Settings
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -18,7 +18,7 @@ class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
-    HomeScreen(),
+    CommandCenterScreen(),
     SpacesScreen(),
     GuardsScreen(),
     EventsScreen(),
@@ -38,9 +38,9 @@ class _AppShellState extends State<AppShell> {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.videocam_outlined),
+            activeIcon: Icon(Icons.videocam),
+            label: 'Cameras',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.grid_view_outlined),

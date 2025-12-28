@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLogin() {
-    // Mock login - just navigate to app shell
+    // Mock login - navigate to AppShell (Command Center is first tab)
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const AppShell()),
     );
