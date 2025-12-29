@@ -5,8 +5,8 @@ import '../../repositories/guards_repository.dart';
 
 /// 3-Step Guard Creation Wizard
 /// Step 1: Name your guard
-/// Step 2: Choose guard type (visual selection)
-/// Step 3: Select cameras
+/// Step 2: Natural language instructions - tell it what to watch for
+/// Step 3: Select cameras and notification preferences
 class CreateGuardScreen extends StatefulWidget {
   const CreateGuardScreen({super.key});
 
@@ -18,9 +18,9 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
   final GuardsRepository _repository = GuardsRepository();
   final PageController _pageController = PageController();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _instructionsController = TextEditingController();
 
   int _currentStep = 0;
-  GuardType? _selectedType;
   final List<String> _selectedCameras = [];
   bool _notifyOnDetection = true;
 
@@ -37,6 +37,7 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
   void dispose() {
     _pageController.dispose();
     _nameController.dispose();
+    _instructionsController.dispose();
     super.dispose();
   }
 
@@ -63,14 +64,16 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
   }
 
   Future<void> _createGuard() async {
-    if (_nameController.text.isEmpty || _selectedType == null || _selectedCameras.isEmpty) {
+    if (_nameController.text.isEmpty ||
+        _instructionsController.text.isEmpty ||
+        _selectedCameras.isEmpty) {
       return;
     }
 
     await _repository.create(
-      name: _nameController.text,
-      description: _selectedType!.defaultDescription,
-      type: _selectedType!,
+      name: _nameController.text.trim(),
+      description: _instructionsController.text.trim(),
+      type: GuardType.custom, // All guards are custom with natural language instructions
       cameraIds: _selectedCameras,
       notifyOnDetection: _notifyOnDetection,
     );
@@ -85,7 +88,7 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
       case 0:
         return _nameController.text.trim().isNotEmpty;
       case 1:
-        return _selectedType != null;
+        return _instructionsController.text.trim().isNotEmpty;
       case 2:
         return _selectedCameras.isNotEmpty;
       default:
@@ -179,7 +182,7 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
         children: [
           const SizedBox(height: 20),
           Text(
-            'Name your guard',
+            'Give your guard a name',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,
@@ -188,22 +191,24 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Give it a meaningful name that describes its purpose.',
+            'Something memorable that tells you what it does.',
             style: TextStyle(
               fontSize: 15,
               color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 32),
           TextField(
             controller: _nameController,
             autofocus: true,
+            textCapitalization: TextCapitalization.words,
             style: TextStyle(
               fontSize: 17,
               color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
             ),
             decoration: InputDecoration(
-              hintText: 'e.g., Package Watch, Pool Safety',
+              hintText: 'Front Door Guard',
               hintStyle: TextStyle(
                 color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
               ),
@@ -217,12 +222,45 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
             ),
             onChanged: (_) => setState(() {}),
           ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withOpacity(0.05)
+                  : Colors.black.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Think of guards as members of your security team',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // Step 2: Choose guard type
+  // Step 2: Tell your guard what to do
   Widget _buildStep2(BuildContext context, bool isDark) {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -231,7 +269,7 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
         children: [
           const SizedBox(height: 20),
           Text(
-            'What should it watch for?',
+            'What should your guard do?',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,
@@ -240,73 +278,79 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Choose the type of activity to monitor.',
+            'Describe what you want it to watch for. Use natural language, like you\'re talking to a person.',
             style: TextStyle(
               fontSize: 15,
               color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 32),
           Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.1,
-              children: GuardType.values.map((type) {
-                final isSelected = _selectedType == type;
-                return _buildTypeCard(type, isSelected, isDark);
-              }).toList(),
+            child: TextField(
+              controller: _instructionsController,
+              autofocus: true,
+              maxLines: null,
+              expands: true,
+              textAlignVertical: TextAlignVertical.top,
+              style: TextStyle(
+                fontSize: 17,
+                height: 1.5,
+                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Examples:\n\n"Alert me when a package is delivered to the front door"\n\n"Watch for people near the pool after 10pm"\n\n"Let me know if any vehicle enters the driveway"',
+                hintStyle: TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                  color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                ),
+                filled: true,
+                fillColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.all(16),
+                alignLabelWithHint: true,
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withOpacity(0.05)
+                  : Colors.black.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.lightbulb_outline,
+                  size: 16,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Be specific about what, when, and where',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTypeCard(GuardType type, bool isSelected, bool isDark) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedType = type;
-        });
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight)
-              : (isDark ? AppColors.surfaceDark : AppColors.surfaceLight),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight)
-                : (isDark ? AppColors.dividerDark : AppColors.dividerLight),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              type.icon,
-              size: 48,
-              color: isSelected
-                  ? (isDark ? AppColors.backgroundDark : AppColors.backgroundLight)
-                  : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              type.displayName,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: isSelected
-                    ? (isDark ? AppColors.backgroundDark : AppColors.backgroundLight)
-                    : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -320,7 +364,7 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
         children: [
           const SizedBox(height: 20),
           Text(
-            'Select cameras',
+            'Which cameras should it watch?',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,
@@ -329,10 +373,11 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Choose which cameras this guard will monitor.',
+            'Pick the cameras where your guard will be on duty.',
             style: TextStyle(
               fontSize: 15,
               color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 32),
@@ -400,7 +445,7 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
                             _notifyOnDetection = value;
                           });
                         },
-                        activeColor: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                        activeTrackColor: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                       ),
                     ],
                   ),
