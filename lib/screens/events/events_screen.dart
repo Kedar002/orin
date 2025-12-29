@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/theme/app_colors.dart';
@@ -224,7 +225,7 @@ class EventsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(
-                Icons.play_circle_outline,
+                CupertinoIcons.play_circle,
                 size: 24,
                 color: isDark
                     ? Colors.white.withOpacity(0.4)
@@ -276,7 +277,7 @@ class EventsScreen extends StatelessWidget {
 
             // Simple chevron
             Icon(
-              Icons.chevron_right,
+              CupertinoIcons.chevron_right,
               size: 20,
               color: isDark
                   ? AppColors.textTertiaryDark

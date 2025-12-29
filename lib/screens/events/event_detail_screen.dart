@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -42,7 +43,7 @@ class EventDetailScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.play_circle_outline,
+                      CupertinoIcons.play_circle,
                       size: 64,
                       color: isDark
                           ? AppColors.textTertiaryDark
@@ -91,7 +92,7 @@ class EventDetailScreen extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      Icons.location_on_outlined,
+                      CupertinoIcons.location,
                       size: 16,
                       color: isDark
                           ? AppColors.textSecondaryDark
@@ -108,7 +109,7 @@ class EventDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Icon(
-                      Icons.schedule_outlined,
+                      CupertinoIcons.clock,
                       size: 16,
                       color: isDark
                           ? AppColors.textSecondaryDark
@@ -150,7 +151,7 @@ class EventDetailScreen extends StatelessWidget {
                     onPressed: () {
                       // Mock action - download clip
                     },
-                    icon: const Icon(Icons.download_outlined),
+                    icon: const Icon(CupertinoIcons.arrow_down_circle),
                     label: const Text('Save Clip'),
                   ),
                 ),
@@ -163,7 +164,7 @@ class EventDetailScreen extends StatelessWidget {
                     onPressed: () {
                       // Mock action - share
                     },
-                    icon: const Icon(Icons.share_outlined),
+                    icon: const Icon(CupertinoIcons.share),
                     label: const Text('Share'),
                   ),
                 ),
@@ -177,7 +178,7 @@ class EventDetailScreen extends StatelessWidget {
                       // Mock action - delete
                       Navigator.of(context).pop();
                     },
-                    icon: const Icon(Icons.delete_outline),
+                    icon: const Icon(CupertinoIcons.trash),
                     label: const Text('Delete Event'),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.error,

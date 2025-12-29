@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -30,7 +31,7 @@ class LiveCameraScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.videocam,
+                      CupertinoIcons.videocam_fill,
                       size: 64,
                       color: isDark
                           ? AppColors.textTertiaryDark
@@ -68,7 +69,7 @@ class LiveCameraScreen extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
+                    icon: const Icon(CupertinoIcons.xmark, color: Colors.white),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -134,7 +135,7 @@ class LiveCameraScreen extends StatelessWidget {
                   children: [
                     _buildControlButton(
                       context,
-                      icon: Icons.camera_alt_outlined,
+                      icon: CupertinoIcons.camera,
                       label: 'Snapshot',
                       onTap: () {
                         // Mock action
@@ -142,7 +143,7 @@ class LiveCameraScreen extends StatelessWidget {
                     ),
                     _buildControlButton(
                       context,
-                      icon: Icons.volume_up_outlined,
+                      icon: CupertinoIcons.speaker_2_fill,
                       label: 'Audio',
                       onTap: () {
                         // Mock action
@@ -150,7 +151,7 @@ class LiveCameraScreen extends StatelessWidget {
                     ),
                     _buildControlButton(
                       context,
-                      icon: Icons.fullscreen,
+                      icon: CupertinoIcons.fullscreen,
                       label: 'Fullscreen',
                       onTap: () {
                         // Mock action

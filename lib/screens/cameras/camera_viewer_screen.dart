@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/constants/app_spacing.dart';
@@ -226,9 +227,9 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                   right: 8,
                   child: Row(
                     children: [
-                      _buildControlButton(Icons.chevron_left, () => Navigator.pop(context)),
+                      _buildControlButton(CupertinoIcons.chevron_left, () => Navigator.pop(context)),
                       const Spacer(),
-                      _buildControlButton(Icons.more_horiz, () {}),
+                      _buildControlButton(CupertinoIcons.ellipsis, () {}),
                     ],
                   ),
                 ),
@@ -237,7 +238,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
               if (_showControls)
                 Center(
                   child: _buildControlButton(
-                    _isPlaying ? Icons.pause : Icons.play_arrow,
+                    _isPlaying ? CupertinoIcons.pause_fill : CupertinoIcons.play_fill,
                     _togglePlayPause,
                     size: 56,
                   ),
@@ -404,11 +405,11 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildActionItem(Icons.info_outline, 'Info', () => _showInfoSheet(theme, isDark), isDark),
-          _buildActionItem(Icons.auto_awesome, 'Summarize', () => _showSummarizeSheet(theme, isDark), isDark),
-          _buildActionItem(Icons.arrow_downward, 'Download', () => _showDownloadSheet(theme, isDark), isDark),
-          _buildActionItem(Icons.camera_alt_outlined, 'Snapshot', () => _showSnapshotSheet(theme, isDark), isDark),
-          _buildActionItem(Icons.square_outlined, 'Share', () => _showShareSheet(theme, isDark), isDark),
+          _buildActionItem(CupertinoIcons.info_circle, 'Info', () => _showInfoSheet(theme, isDark), isDark),
+          _buildActionItem(CupertinoIcons.sparkles, 'Summarize', () => _showSummarizeSheet(theme, isDark), isDark),
+          _buildActionItem(CupertinoIcons.arrow_down_circle, 'Download', () => _showDownloadSheet(theme, isDark), isDark),
+          _buildActionItem(CupertinoIcons.camera, 'Snapshot', () => _showSnapshotSheet(theme, isDark), isDark),
+          _buildActionItem(CupertinoIcons.share, 'Share', () => _showShareSheet(theme, isDark), isDark),
         ],
       ),
     );
@@ -529,7 +530,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
               ),
             ),
             Icon(
-              Icons.chevron_right,
+              CupertinoIcons.chevron_right,
               size: 20,
               color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
             ),
@@ -607,7 +608,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                                 color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Icon(Icons.shield_outlined, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+                              child: Icon(CupertinoIcons.shield, size: 20, color: isDark ? Colors.white70 : Colors.black54),
                             ),
                             const SizedBox(width: AppSpacing.md),
                             Expanded(
@@ -689,7 +690,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                           color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.close, size: 18, color: isDark ? Colors.white70 : Colors.black54),
+                        child: Icon(CupertinoIcons.xmark, size: 18, color: isDark ? Colors.white70 : Colors.black54),
                       ),
                     ),
                   ],
@@ -720,7 +721,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                         '9:15 AM',
                         'Peak Entry Traffic',
                         '23 people detected entering',
-                        Icons.trending_up,
+                        CupertinoIcons.arrow_up_right,
                         AppColors.success,
                         theme,
                         isDark,
@@ -730,7 +731,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                         '2:34 PM',
                         'Delivery Vehicle',
                         'Truck detected at loading dock',
-                        Icons.local_shipping_outlined,
+                        CupertinoIcons.car,
                         isDark ? Colors.blue.shade300 : Colors.blue.shade700,
                         theme,
                         isDark,
@@ -740,7 +741,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                         '5:30 PM',
                         'Peak Exit Traffic',
                         '28 people detected exiting',
-                        Icons.trending_down,
+                        CupertinoIcons.arrow_down_right,
                         AppColors.warning,
                         theme,
                         isDark,
@@ -749,13 +750,13 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                       const SizedBox(height: AppSpacing.xl),
 
                       // Stats - Simple list
-                      _buildDetectionStat(Icons.person_outline, 'People', '92', theme, isDark),
+                      _buildDetectionStat(CupertinoIcons.person, 'People', '92', theme, isDark),
                       Divider(height: AppSpacing.lg, color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
-                      _buildDetectionStat(Icons.directions_car_outlined, 'Vehicles', '14', theme, isDark),
+                      _buildDetectionStat(CupertinoIcons.car, 'Vehicles', '14', theme, isDark),
                       Divider(height: AppSpacing.lg, color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
-                      _buildDetectionStat(Icons.pets_outlined, 'Animals', '2', theme, isDark),
+                      _buildDetectionStat(CupertinoIcons.paw, 'Animals', '2', theme, isDark),
                       Divider(height: AppSpacing.lg, color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
-                      _buildDetectionStat(Icons.warning_amber_outlined, 'Alerts', '0', theme, isDark),
+                      _buildDetectionStat(CupertinoIcons.exclamationmark_triangle, 'Alerts', '0', theme, isDark),
 
                       const SizedBox(height: AppSpacing.xl),
 
@@ -789,7 +790,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.chat_bubble_outline, size: 22, color: isDark ? Colors.white70 : Colors.black54),
+                              Icon(CupertinoIcons.chat_bubble, size: 22, color: isDark ? Colors.white70 : Colors.black54),
                               const SizedBox(width: AppSpacing.md),
                               Expanded(
                                 child: Text(
@@ -797,7 +798,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                                   style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
                                 ),
                               ),
-                              Icon(Icons.chevron_right, size: 20, color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
+                              Icon(CupertinoIcons.chevron_right, size: 20, color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
                             ],
                           ),
                         ),
@@ -924,7 +925,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                         color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(Icons.chat_bubble_outline, size: 18, color: isDark ? Colors.white70 : Colors.black54),
+                      child: Icon(CupertinoIcons.chat_bubble, size: 18, color: isDark ? Colors.white70 : Colors.black54),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
@@ -950,7 +951,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                           color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.close, size: 18, color: isDark ? Colors.white70 : Colors.black54),
+                        child: Icon(CupertinoIcons.xmark, size: 18, color: isDark ? Colors.white70 : Colors.black54),
                       ),
                     ),
                   ],
@@ -1005,7 +1006,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                             color: isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.08),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.arrow_upward, size: 18, color: isDark ? Colors.white70 : Colors.black87),
+                          child: Icon(CupertinoIcons.arrow_up, size: 18, color: isDark ? Colors.white70 : Colors.black87),
                         ),
                       ),
                     ],
@@ -1039,11 +1040,11 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                 children: [
                   Text('Download', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildOption(Icons.video_file_outlined, 'Download Full Video', '18:45  ·  245 MB', theme, isDark),
+                  _buildOption(CupertinoIcons.videocam_fill, 'Download Full Video', '18:45  ·  245 MB', theme, isDark),
                   const SizedBox(height: AppSpacing.sm),
-                  _buildOption(Icons.cut_outlined, 'Download Clip', 'Select time range', theme, isDark),
+                  _buildOption(CupertinoIcons.scissors, 'Download Clip', 'Select time range', theme, isDark),
                   const SizedBox(height: AppSpacing.sm),
-                  _buildOption(Icons.high_quality_outlined, 'Download HD', '18:45  ·  680 MB', theme, isDark),
+                  _buildOption(CupertinoIcons.checkmark_seal_fill, 'Download HD', '18:45  ·  680 MB', theme, isDark),
                 ],
               ),
             ),
@@ -1084,7 +1085,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.camera_alt, size: 14, color: isDark ? Colors.white70 : Colors.black87),
+                            Icon(CupertinoIcons.camera_fill, size: 14, color: isDark ? Colors.white70 : Colors.black87),
                             const SizedBox(width: 4),
                             Text('Capture', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.black87)),
                           ],
@@ -1110,7 +1111,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                         ),
                         child: Stack(
                           children: [
-                            Center(child: Icon(Icons.image_outlined, size: 32, color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1))),
+                            Center(child: Icon(CupertinoIcons.photo, size: 32, color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1))),
                             Positioned(
                               bottom: 6,
                               right: 6,
@@ -1155,13 +1156,13 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                 children: [
                   Text('Share', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildOption(Icons.link, 'Copy Link', 'Share video link', theme, isDark),
+                  _buildOption(CupertinoIcons.link, 'Copy Link', 'Share video link', theme, isDark),
                   const SizedBox(height: AppSpacing.sm),
-                  _buildOption(Icons.qr_code, 'QR Code', 'Generate QR code', theme, isDark),
+                  _buildOption(CupertinoIcons.qrcode, 'QR Code', 'Generate QR code', theme, isDark),
                   const SizedBox(height: AppSpacing.sm),
-                  _buildOption(Icons.mail_outline, 'Email', 'Send via email', theme, isDark),
+                  _buildOption(CupertinoIcons.mail, 'Email', 'Send via email', theme, isDark),
                   const SizedBox(height: AppSpacing.sm),
-                  _buildOption(Icons.more_horiz, 'More', 'Other options', theme, isDark),
+                  _buildOption(CupertinoIcons.ellipsis, 'More', 'Other options', theme, isDark),
                 ],
               ),
             ),
@@ -1230,7 +1231,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
               ],
             ),
           ),
-          Icon(Icons.chevron_right, size: 20, color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
+          Icon(CupertinoIcons.chevron_right, size: 20, color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
         ],
       ),
     );
@@ -1248,7 +1249,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
               width: 28,
               height: 28,
               decoration: BoxDecoration(color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05), shape: BoxShape.circle),
-              child: Icon(Icons.auto_awesome, size: 14, color: isDark ? Colors.white70 : Colors.black54),
+              child: Icon(CupertinoIcons.sparkles, size: 14, color: isDark ? Colors.white70 : Colors.black54),
             ),
             const SizedBox(width: 8),
           ],
@@ -1277,7 +1278,7 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
               width: 28,
               height: 28,
               decoration: BoxDecoration(color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05), shape: BoxShape.circle),
-              child: Icon(Icons.person, size: 14, color: isDark ? Colors.white70 : Colors.black54),
+              child: Icon(CupertinoIcons.person_fill, size: 14, color: isDark ? Colors.white70 : Colors.black54),
             ),
           ],
         ],

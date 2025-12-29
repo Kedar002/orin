@@ -79,7 +79,7 @@ class _CleanCardState extends State<CleanCard> with SingleTickerProviderStateMix
         onTapDown: _handleTapDown,
         onTapUp: _handleTapUp,
         onTapCancel: _handleTapCancel,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: card,
       );
 

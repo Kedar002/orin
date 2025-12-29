@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../core/constants/security_colors.dart';
 import 'camera_viewer_screen.dart';
 
@@ -45,7 +46,7 @@ class _CamerasGridScreenState extends State<CamerasGridScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
-            Icons.arrow_back,
+            CupertinoIcons.back,
             color: SecurityColors.primaryText,
           ),
           onPressed: () => Navigator.of(context).pop(),
@@ -62,7 +63,7 @@ class _CamerasGridScreenState extends State<CamerasGridScreen> {
           // Grid size toggle
           PopupMenuButton<int>(
             icon: const Icon(
-              Icons.grid_view,
+              CupertinoIcons.square_grid_2x2,
               color: SecurityColors.primaryText,
             ),
             onSelected: (value) {
@@ -116,7 +117,7 @@ class _CamerasGridScreenState extends State<CamerasGridScreen> {
           // Filter toggle
           IconButton(
             icon: Icon(
-              _showOnlineOnly ? Icons.filter_alt : Icons.filter_alt_outlined,
+              _showOnlineOnly ? CupertinoIcons.slider_horizontal_3 : CupertinoIcons.slider_horizontal_3,
               color: _showOnlineOnly
                   ? SecurityColors.accent
                   : SecurityColors.primaryText,
@@ -135,7 +136,7 @@ class _CamerasGridScreenState extends State<CamerasGridScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.videocam_off_outlined,
+                    CupertinoIcons.videocam,
                     size: 64,
                     color: SecurityColors.secondaryText.withOpacity(0.3),
                   ),
@@ -217,7 +218,7 @@ class _CamerasGridScreenState extends State<CamerasGridScreen> {
                 ),
                 child: Center(
                   child: Icon(
-                    isOnline ? Icons.videocam : Icons.videocam_off_outlined,
+                    isOnline ? CupertinoIcons.videocam_fill : CupertinoIcons.videocam,
                     color: isOnline
                         ? SecurityColors.accent.withOpacity(0.3)
                         : SecurityColors.secondaryText.withOpacity(0.3),
@@ -340,7 +341,7 @@ class _CamerasGridScreenState extends State<CamerasGridScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.videocam_off,
+                            CupertinoIcons.videocam,
                             color: Colors.white,
                             size: 24,
                           ),

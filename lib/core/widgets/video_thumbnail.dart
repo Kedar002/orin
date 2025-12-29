@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:video_player/video_player.dart';
 
 /// Reusable video thumbnail widget
@@ -52,7 +53,7 @@ class _VideoThumbnailState extends State<VideoThumbnail> {
         color: Colors.black,
         child: Center(
           child: Icon(
-            Icons.play_circle_outline,
+            CupertinoIcons.play_circle,
             color: Colors.white.withOpacity(0.3),
             size: 32,
           ),

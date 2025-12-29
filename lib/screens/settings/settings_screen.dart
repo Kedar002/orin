@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -208,7 +209,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             Icon(
-              Icons.chevron_right,
+              CupertinoIcons.chevron_right,
               size: 20,
               color: isDark
                   ? AppColors.textTertiaryDark

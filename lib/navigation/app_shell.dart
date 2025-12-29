@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../screens/command_center/command_center_screen.dart';
 import '../screens/spaces/spaces_screen.dart';
 import '../screens/guards/guards_screen.dart';
@@ -29,28 +30,28 @@ class _AppShellState extends State<AppShell> {
 
   final List<_NavItem> _navItems = const [
     _NavItem(
-      icon: Icons.videocam_outlined,
-      activeIcon: Icons.videocam,
+      icon: CupertinoIcons.videocam,
+      activeIcon: CupertinoIcons.videocam_fill,
       label: 'Cameras',
     ),
     _NavItem(
-      icon: Icons.grid_view_outlined,
-      activeIcon: Icons.grid_view,
+      icon: CupertinoIcons.square_grid_2x2,
+      activeIcon: CupertinoIcons.square_grid_2x2_fill,
       label: 'Spaces',
     ),
     _NavItem(
-      icon: Icons.shield_outlined,
-      activeIcon: Icons.shield,
+      icon: CupertinoIcons.shield,
+      activeIcon: CupertinoIcons.shield_fill,
       label: 'Guards',
     ),
     _NavItem(
-      icon: Icons.notifications_outlined,
-      activeIcon: Icons.notifications,
+      icon: CupertinoIcons.bell,
+      activeIcon: CupertinoIcons.bell_fill,
       label: 'Events',
     ),
     _NavItem(
-      icon: Icons.settings_outlined,
-      activeIcon: Icons.settings,
+      icon: CupertinoIcons.settings,
+      activeIcon: CupertinoIcons.settings_solid,
       label: 'Settings',
     ),
   ];
@@ -77,7 +78,7 @@ class _AppShellState extends State<AppShell> {
         child: SafeArea(
           top: false,
           child: SizedBox(
-            height: 52,
+            height: 49,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(_navItems.length, (index) {
@@ -148,7 +149,7 @@ class _NavBarButton extends StatelessWidget {
           children: [
             Icon(
               isSelected ? item.activeIcon : item.icon,
-              size: 24,
+              size: 25,
               color: color,
             ),
             const SizedBox(height: 2),

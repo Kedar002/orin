@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
 import '../../core/theme/app_colors.dart';
@@ -124,7 +125,7 @@ class _GuardsScreenState extends State<GuardsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddGuardSheet(context),
-        child: const Icon(Icons.add),
+        child: const Icon(CupertinoIcons.add),
       ),
     );
   }
@@ -207,7 +208,7 @@ class _GuardsScreenState extends State<GuardsScreen> {
 
           // Chevron
           Icon(
-            Icons.chevron_right,
+            CupertinoIcons.chevron_right,
             size: 20,
             color: isDark
                 ? AppColors.textTertiaryDark

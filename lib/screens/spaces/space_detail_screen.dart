@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
 import '../../core/theme/app_colors.dart';
@@ -167,7 +168,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddOptions(context),
-        child: const Icon(Icons.add),
+        child: const Icon(CupertinoIcons.add),
       ),
     );
   }
@@ -194,7 +195,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.folder_outlined,
+              CupertinoIcons.folder,
               size: 20,
               color: isDark ? Colors.white70 : Colors.black54,
             ),
@@ -229,7 +230,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
           const SizedBox(width: AppSpacing.sm),
 
           Icon(
-            Icons.chevron_right,
+            CupertinoIcons.chevron_right,
             size: 20,
             color: isDark
                 ? AppColors.textTertiaryDark
@@ -263,7 +264,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.videocam_outlined,
+              CupertinoIcons.videocam,
               size: 20,
               color: isDark ? Colors.white70 : Colors.black54,
             ),
@@ -313,7 +314,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
           const SizedBox(width: AppSpacing.sm),
 
           Icon(
-            Icons.chevron_right,
+            CupertinoIcons.chevron_right,
             size: 20,
             color: isDark
                 ? AppColors.textTertiaryDark
@@ -352,7 +353,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
                   // Camera icon in center
                   Center(
                     child: Icon(
-                      Icons.videocam_outlined,
+                      CupertinoIcons.videocam,
                       size: 48,
                       color: isDark
                           ? Colors.white.withOpacity(0.3)
@@ -448,7 +449,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.folder_open_outlined,
+            CupertinoIcons.folder_open,
             size: 64,
             color: isDark
                 ? AppColors.textTertiaryDark
@@ -529,7 +530,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
 
             if (_currentSpace.canAddSubSpace())
               ListTile(
-                leading: const Icon(Icons.create_new_folder_outlined),
+                leading: const Icon(CupertinoIcons.folder_badge_plus),
                 title: const Text('Add Sub-space'),
                 onTap: () {
                   Navigator.pop(context);
@@ -538,7 +539,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
               ),
 
             ListTile(
-              leading: const Icon(Icons.videocam_outlined),
+              leading: const Icon(CupertinoIcons.videocam),
               title: const Text('Add Camera'),
               onTap: () {
                 Navigator.pop(context);
@@ -567,15 +568,15 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     final icons = [
-      Icons.folder_outlined,
-      Icons.business_outlined,
-      Icons.home_outlined,
-      Icons.apartment_outlined,
-      Icons.store_outlined,
-      Icons.location_city_outlined,
+      CupertinoIcons.folder,
+      CupertinoIcons.building_2_fill,
+      CupertinoIcons.house,
+      CupertinoIcons.building_2_fill,
+      CupertinoIcons.bag,
+      CupertinoIcons.building_2_fill,
     ];
 
-    IconData selectedIcon = Icons.folder_outlined;
+    IconData selectedIcon = CupertinoIcons.folder;
     final nameController = TextEditingController();
 
     showModalBottomSheet(

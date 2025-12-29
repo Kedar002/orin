@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
 import '../../core/widgets/video_thumbnail.dart';
@@ -270,7 +271,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                     // Placeholder for offline cameras
                     Center(
                       child: Icon(
-                        Icons.videocam_outlined,
+                        CupertinoIcons.videocam,
                         size: 48,
                         color: isDark
                             ? Colors.white.withOpacity(0.1)
@@ -340,7 +341,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.videocam_off_outlined,
+                                CupertinoIcons.videocam,
                                 color: Colors.white.withOpacity(0.7),
                                 size: 32,
                               ),
@@ -420,7 +421,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.shield_outlined,
+              CupertinoIcons.shield,
               size: 18,
               color: isDark ? Colors.white70 : Colors.black54,
             ),
@@ -489,7 +490,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.notifications_outlined,
+              CupertinoIcons.bell,
               size: 20,
               color: isDark ? Colors.white70 : Colors.black54,
             ),

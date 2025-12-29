@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/theme/app_colors.dart';
 import '../auth/login_screen.dart';
@@ -19,17 +20,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<_OnboardingPage> _pages = const [
     _OnboardingPage(
-      icon: Icons.videocam_outlined,
+      icon: CupertinoIcons.videocam,
       title: 'Your cameras,\nwatched for you',
       subtitle: 'AI guards monitor your spaces and notify you of what matters.',
     ),
     _OnboardingPage(
-      icon: Icons.shield_outlined,
+      icon: CupertinoIcons.shield,
       title: 'Smart alerts,\nnot spam',
       subtitle: 'Get notified of important moments. No noise, just signal.',
     ),
     _OnboardingPage(
-      icon: Icons.done_all,
+      icon: CupertinoIcons.checkmark_alt_circle,
       title: 'Complete\npeace of mind',
       subtitle: 'Everything you need to feel in control, nothing you don\'t.',
     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
 import '../../core/theme/app_colors.dart';
@@ -117,7 +118,7 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline),
+            icon: const Icon(CupertinoIcons.info_circle),
             onPressed: () {
               _showGuardInfo(context);
             },
@@ -196,7 +197,7 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_upward, color: Colors.white),
+                      icon: const Icon(CupertinoIcons.arrow_up, color: Colors.white),
                       onPressed: () {
                         // Send message logic
                         _messageController.clear();
@@ -410,7 +411,7 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                   children: [
                     Center(
                       child: Icon(
-                        Icons.videocam_outlined,
+                        CupertinoIcons.videocam,
                         size: 32,
                         color: isDark
                             ? Colors.white.withOpacity(0.3)
