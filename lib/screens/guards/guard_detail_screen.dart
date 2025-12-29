@@ -4,6 +4,10 @@ import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
 import '../../core/widgets/mono_status_dot.dart';
 import '../../core/theme/app_colors.dart';
+import '../../models/guard_model.dart';
+import '../../models/catch_model.dart';
+import '../../repositories/guards_repository.dart';
+import '../../repositories/catches_repository.dart';
 import 'catches_screen.dart';
 
 /// Guard detail screen
@@ -11,6 +15,7 @@ import 'catches_screen.dart';
 /// You chat with it. It watches cameras. It tells you what matters.
 /// This is a conversation, not a settings page.
 class GuardDetailScreen extends StatefulWidget {
+  final String guardId;
   final String guardName;
   final String guardSpace;
   final String guardDescription;
@@ -18,6 +23,7 @@ class GuardDetailScreen extends StatefulWidget {
 
   const GuardDetailScreen({
     super.key,
+    required this.guardId,
     required this.guardName,
     required this.guardSpace,
     required this.guardDescription,
@@ -29,14 +35,28 @@ class GuardDetailScreen extends StatefulWidget {
 }
 
 class _GuardDetailScreenState extends State<GuardDetailScreen> {
-  late bool _isActive;
+  final GuardsRepository _guardsRepository = GuardsRepository();
+  final CatchesRepository _catchesRepository = CatchesRepository();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+
+  late Guard _guard;
+  List<Catch> _recentCatches = [];
 
   @override
   void initState() {
     super.initState();
-    _isActive = widget.isActive;
+    _loadGuardData();
+  }
+
+  void _loadGuardData() {
+    final guard = _guardsRepository.getById(widget.guardId);
+    if (guard != null) {
+      setState(() {
+        _guard = guard;
+        _recentCatches = _catchesRepository.getByGuardId(widget.guardId);
+      });
+    }
   }
 
   @override
@@ -46,41 +66,49 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
     super.dispose();
   }
 
-  // Mock cameras where this guard is watching
-  List<Map<String, dynamic>> _getCameras() {
-    return [
-      {
-        'name': 'Main Entrance',
-        'id': 'CAM-001',
-        'status': 'online',
-      },
-      {
-        'name': 'Driveway',
-        'id': 'CAM-002',
-        'status': 'online',
-      },
-      {
-        'name': 'Front Door',
-        'id': 'CAM-003',
-        'status': 'online',
-      },
-    ];
+  Future<void> _toggleActive() async {
+    await _guardsRepository.toggleActive(widget.guardId);
+    _loadGuardData();
   }
 
-  // Mock recent catches
-  List<Map<String, String>> _getRecentCatches() {
-    return [
-      {'title': 'Package delivered', 'time': '2 hours ago'},
-      {'title': 'Person detected', 'time': '4 hours ago'},
-      {'title': 'Motion detected', 'time': 'Yesterday'},
-    ];
+  // Mock cameras where this guard is watching - in production, load from camera repository
+  List<Map<String, dynamic>> _getCameras() {
+    return _guard.cameraIds.map((id) {
+      // Map camera IDs to names - in production, this would come from a camera repository
+      String name;
+      switch (id) {
+        case 'CAM-001':
+          name = 'Main Entrance';
+          break;
+        case 'CAM-002':
+          name = 'Backyard Pool';
+          break;
+        case 'CAM-003':
+          name = 'Front Door';
+          break;
+        case 'CAM-004':
+          name = 'Garage';
+          break;
+        case 'CAM-005':
+          name = 'Side Entrance';
+          break;
+        default:
+          name = 'Camera ${id.replaceAll('CAM-', '')}';
+      }
+
+      return {
+        'name': name,
+        'id': id,
+        'status': 'online',
+      };
+    }).toList();
   }
 
   // Mock chat messages
   List<Map<String, dynamic>> _getMessages() {
     return [
       {
-        'text': 'Hi! I\'m watching your front door area. I\'ll let you know if I see any packages or visitors.',
+        'text': 'Hi! I\'m watching ${_guard.cameraIds.length} camera${_guard.cameraIds.length == 1 ? '' : 's'} for ${_guard.type.displayName.toLowerCase()}. I\'ll let you know when I see something.',
         'isGuard': true,
         'time': '10:30 AM',
       },
@@ -90,7 +118,7 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
         'time': '2:15 PM',
       },
       {
-        'text': 'I detected a package delivery at 2:10 PM and a person at the door at 11:45 AM.',
+        'text': 'I detected ${_guard.catchesThisWeek} event${_guard.catchesThisWeek == 1 ? '' : 's'} this week. ${_recentCatches.isNotEmpty ? 'The most recent was "${_recentCatches.first.title}".' : ''}',
         'isGuard': true,
         'time': '2:15 PM',
       },
@@ -109,16 +137,16 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.guardName),
+            Text(_guard.name),
             Row(
               children: [
                 MonoStatusDot(
-                  type: _isActive ? MonoStatusType.active : MonoStatusType.warning,
+                  type: _guard.isActive ? MonoStatusType.active : MonoStatusType.warning,
                   size: 6,
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  _isActive ? 'Active' : 'Paused',
+                  _guard.statusText,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: isDark
                         ? AppColors.textSecondaryDark
@@ -233,7 +261,6 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final cameras = _getCameras();
-    final catches = _getRecentCatches();
 
     showModalBottomSheet(
       context: context,
@@ -273,22 +300,35 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   children: [
                     // Guard name and status
-                    Text(
-                      widget.guardName,
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _guard.name,
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(CupertinoIcons.pencil),
+                          onPressed: () {
+                            // TODO: Show edit dialog
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Row(
                       children: [
                         MonoStatusDot(
-                          type: _isActive ? MonoStatusType.active : MonoStatusType.warning,
+                          type: _guard.isActive ? MonoStatusType.active : MonoStatusType.warning,
                           size: 8,
                         ),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
-                          _isActive ? 'Active' : 'Paused',
+                          _guard.statusText,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: isDark
                                 ? AppColors.textSecondaryDark
@@ -297,13 +337,47 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                         ),
                         const Spacer(),
                         Switch(
-                          value: _isActive,
-                          onChanged: (value) {
-                            setState(() {
-                              _isActive = value;
-                            });
-                            Navigator.pop(context);
+                          value: _guard.isActive,
+                          onChanged: (value) async {
+                            await _toggleActive();
+                            if (mounted) {
+                              Navigator.pop(context);
+                            }
                           },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Statistics
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            context,
+                            '${_guard.catchesThisWeek}',
+                            'This week',
+                            isDark,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: _buildStatCard(
+                            context,
+                            '${_guard.totalCatches}',
+                            'All time',
+                            isDark,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: _buildStatCard(
+                            context,
+                            '${_guard.successRate}%',
+                            'Success rate',
+                            isDark,
+                          ),
                         ),
                       ],
                     ),
@@ -318,22 +392,35 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    SizedBox(
-                      height: 100,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: cameras.length,
-                        itemBuilder: (context, index) {
-                          final camera = cameras[index];
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              right: index < cameras.length - 1 ? AppSpacing.sm : 0,
-                            ),
-                            child: _buildCameraCard(context, camera, isDark),
-                          );
-                        },
+                    if (cameras.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                        child: Text(
+                          'No cameras assigned',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        height: 100,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: cameras.length,
+                          itemBuilder: (context, index) {
+                            final camera = cameras[index];
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                right: index < cameras.length - 1 ? AppSpacing.sm : 0,
+                              ),
+                              child: _buildCameraCard(context, camera, isDark),
+                            );
+                          },
+                        ),
                       ),
-                    ),
 
                     const SizedBox(height: AppSpacing.xl),
 
@@ -347,41 +434,61 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => CatchesScreen(
-                                  guardName: widget.guardName,
+                        if (_recentCatches.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => CatchesScreen(
+                                    guardId: _guard.id,
+                                    guardName: _guard.name,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                          child: Row(
-                            children: [
-                              Text(
-                                'View All',
-                                style: theme.textTheme.bodyMedium?.copyWith(
+                              );
+                            },
+                            child: Row(
+                              children: [
+                                Text(
+                                  'View All',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: isDark
+                                        ? AppColors.textSecondaryDark
+                                        : AppColors.textSecondaryLight,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  CupertinoIcons.chevron_right,
+                                  size: 16,
                                   color: isDark
                                       ? AppColors.textSecondaryDark
                                       : AppColors.textSecondaryLight,
                                 ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                CupertinoIcons.chevron_right,
-                                size: 16,
-                                color: isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondaryLight,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    ...catches.map((catch_) => _buildCatchRow(context, catch_, isDark, catch_ == catches.last)),
+                    if (_recentCatches.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                        child: Text(
+                          'No catches yet',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                      )
+                    else
+                      ..._recentCatches.take(5).map((catch_) => _buildCatchRow(
+                            context,
+                            catch_,
+                            isDark,
+                            catch_ == _recentCatches.take(5).last,
+                          )),
 
                     const SizedBox(height: AppSpacing.xl),
                   ],
@@ -394,13 +501,46 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
     );
   }
 
-  Widget _buildCatchRow(BuildContext context, Map<String, String> catch_, bool isDark, bool isLast) {
+  Widget _buildStatCard(BuildContext context, String value, String label, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCatchRow(BuildContext context, Catch catch_, bool isDark, bool isLast) {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => CatchesScreen(
-              guardName: widget.guardName,
+              guardId: _guard.id,
+              guardName: _guard.name,
             ),
           ),
         );
@@ -421,21 +561,29 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
         ),
         child: Row(
           children: [
+            Icon(
+              _getCatchIcon(catch_.type),
+              size: 20,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
-                catch_['title']!,
+                catch_.title,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
             ),
             Text(
-              catch_['time']!,
+              catch_.relativeTime,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ),
             ),
             const SizedBox(width: AppSpacing.xs),
             Icon(
@@ -449,6 +597,23 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
         ),
       ),
     );
+  }
+
+  IconData _getCatchIcon(CatchType type) {
+    switch (type) {
+      case CatchType.delivery:
+        return Icons.inventory_2_outlined;
+      case CatchType.person:
+        return Icons.person_outline;
+      case CatchType.vehicle:
+        return Icons.directions_car_outlined;
+      case CatchType.pet:
+        return Icons.pets_outlined;
+      case CatchType.motion:
+        return Icons.motion_photos_on_outlined;
+      case CatchType.other:
+        return Icons.circle_outlined;
+    }
   }
 
   Widget _buildCameraCard(BuildContext context, Map<String, dynamic> camera, bool isDark) {
@@ -504,8 +669,8 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
               child: Text(
                 camera['name'] as String,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                      fontWeight: FontWeight.w500,
+                    ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -569,5 +734,4 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
       ),
     );
   }
-
 }

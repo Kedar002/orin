@@ -4,10 +4,13 @@ import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
 import '../../core/widgets/mono_status_dot.dart';
 import '../../core/theme/app_colors.dart';
+import '../../models/guard_model.dart';
+import '../../repositories/guards_repository.dart';
 import 'guard_detail_screen.dart';
+import 'create_guard_screen.dart';
 
 /// Guards screen - Virtual Guards list
-/// Premium UI design matching command center and spaces
+/// Shows all AI guards with live status and statistics
 class GuardsScreen extends StatefulWidget {
   const GuardsScreen({super.key});
 
@@ -16,48 +19,57 @@ class GuardsScreen extends StatefulWidget {
 }
 
 class _GuardsScreenState extends State<GuardsScreen> {
-  // Mock guards data - pure monochrome
-  final List<Map<String, dynamic>> _guards = [
-    {
-      'name': 'Package Watch',
-      'space': 'Front Door',
-      'status': 'active',
-      'description': 'Alerts when packages are delivered',
-      'icon': Icons.inventory_2_outlined,
-      'alertsToday': 3,
-    },
-    {
-      'name': 'Pool Safety',
-      'space': 'Backyard',
-      'status': 'active',
-      'description': 'Monitors pool area for safety',
-      'icon': Icons.pool_outlined,
-      'alertsToday': 0,
-    },
-    {
-      'name': 'Night Watch',
-      'space': 'Living Room',
-      'status': 'paused',
-      'description': 'Active during night hours only',
-      'icon': Icons.nightlight_outlined,
-      'alertsToday': 12,
-    },
-    {
-      'name': 'Pet Monitor',
-      'space': 'Kitchen',
-      'status': 'active',
-      'description': 'Watches for pet activity',
-      'icon': Icons.pets_outlined,
-      'alertsToday': 8,
-    },
-  ];
+  final GuardsRepository _repository = GuardsRepository();
+  List<Guard> _guards = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGuards();
+  }
+
+  void _loadGuards() {
+    setState(() {
+      _guards = _repository.getAll();
+    });
+  }
+
+  Future<void> _navigateToCreateGuard() async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => const CreateGuardScreen(),
+      ),
+    );
+
+    // Refresh list if guard was created
+    if (result == true) {
+      _loadGuards();
+    }
+  }
+
+  Future<void> _navigateToGuardDetail(Guard guard) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => GuardDetailScreen(
+          guardId: guard.id,
+          guardName: guard.name,
+          guardSpace: guard.cameraIds.isNotEmpty ? 'Camera ${guard.cameraIds.length}' : 'No cameras',
+          guardDescription: guard.description,
+          isActive: guard.isActive,
+        ),
+      ),
+    );
+
+    // Refresh list in case guard was modified
+    _loadGuards();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final activeGuards = _guards.where((g) => g['status'] == 'active').length;
+    final activeGuards = _guards.where((g) => g.isActive).length;
 
     return Scaffold(
       body: SafeArea(
@@ -97,21 +109,57 @@ class _GuardsScreenState extends State<GuardsScreen> {
             ),
 
             // Guards List
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final guard = _guards[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                      child: _buildGuardRow(context, guard),
-                    );
-                  },
-                  childCount: _guards.length,
+            if (_guards.isEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.shield_outlined,
+                        size: 64,
+                        color: isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'No guards yet',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Create your first AI guard',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: isDark
+                              ? AppColors.textTertiaryDark
+                              : AppColors.textTertiaryLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final guard = _guards[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        child: _buildGuardRow(context, guard),
+                      );
+                    },
+                    childCount: _guards.length,
+                  ),
                 ),
               ),
-            ),
 
             // Bottom spacing
             const SliverToBoxAdapter(
@@ -121,26 +169,25 @@ class _GuardsScreenState extends State<GuardsScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddGuardSheet(context),
+        onPressed: _navigateToCreateGuard,
         child: const Icon(CupertinoIcons.add),
       ),
     );
   }
 
-  Widget _buildGuardRow(BuildContext context, Map<String, dynamic> guard) {
+  Widget _buildGuardRow(BuildContext context, Guard guard) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isActive = guard['status'] == 'active';
 
     return CleanCard(
-      onTap: () => _navigateToGuardDetail(context, guard),
+      onTap: () => _navigateToGuardDetail(guard),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.md,
       ),
       child: Row(
         children: [
-          // Simple icon circle
+          // Icon circle
           Container(
             width: 40,
             height: 40,
@@ -151,7 +198,7 @@ class _GuardsScreenState extends State<GuardsScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              guard['icon'] as IconData,
+              guard.icon,
               size: 20,
               color: isDark ? Colors.white70 : Colors.black54,
             ),
@@ -167,9 +214,9 @@ class _GuardsScreenState extends State<GuardsScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        guard['name'] as String,
+                        guard.name,
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -177,21 +224,43 @@ class _GuardsScreenState extends State<GuardsScreen> {
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     MonoStatusDot(
-                      type: isActive ? MonoStatusType.active : MonoStatusType.warning,
+                      type: guard.isActive
+                          ? MonoStatusType.active
+                          : MonoStatusType.inactive,
                       size: 8,
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  guard['space'] as String,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      '${guard.catchesThisWeek} catches this week',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                    if (guard.lastActivityText != null) ...[
+                      Text(
+                        ' • ',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark
+                              ? AppColors.textTertiaryDark
+                              : AppColors.textTertiaryLight,
+                        ),
+                      ),
+                      Text(
+                        guard.lastActivityText!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark
+                              ? AppColors.textTertiaryDark
+                              : AppColors.textTertiaryLight,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -208,114 +277,6 @@ class _GuardsScreenState extends State<GuardsScreen> {
                 : AppColors.textTertiaryLight,
           ),
         ],
-      ),
-    );
-  }
-
-  void _navigateToGuardDetail(BuildContext context, Map<String, dynamic> guard) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => GuardDetailScreen(
-          guardName: guard['name'] as String,
-          guardSpace: guard['space'] as String,
-          guardDescription: guard['description'] as String,
-          isActive: guard['status'] == 'active',
-        ),
-      ),
-    );
-  }
-
-  void _showAddGuardSheet(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(20),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-
-              Text(
-                'New Guard',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-
-              // Guard name
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  hintText: 'e.g., Package Watch',
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              // Where to watch
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Location',
-                  hintText: 'e.g., Front Door',
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              // What to watch for
-              TextField(
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'What to watch for',
-                  hintText: 'Describe what this guard should monitor...',
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-
-              // Create button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    // Mock action - create guard
-                  },
-                  child: const Text('Create Guard'),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-          ),
-        ),
       ),
     );
   }

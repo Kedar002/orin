@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/splash/splash_screen.dart';
+import 'services/database_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Set system UI overlay style
@@ -12,6 +13,9 @@ void main() {
       statusBarColor: Colors.transparent,
     ),
   );
+
+  // Initialize Hive database
+  await DatabaseService.init();
 
   runApp(const OrinApp());
 }
