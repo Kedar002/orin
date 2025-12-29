@@ -127,7 +127,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
                         AppSpacing.lg,
                         AppSpacing.md,
                         AppSpacing.lg,
-                        AppSpacing.sm,
+                        AppSpacing.md,
                       ),
                       child: Text(
                         'CAMERAS',
@@ -143,13 +143,16 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
                   ),
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    sliver: SliverList(
+                    sliver: SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.85,
+                        crossAxisSpacing: AppSpacing.md,
+                        mainAxisSpacing: AppSpacing.md,
+                      ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                            child: _buildCameraRow(context, _currentSpace.cameras[index]),
-                          );
+                          return _buildCameraGridCard(context, _currentSpace.cameras[index]);
                         },
                         childCount: _currentSpace.cameras.length,
                       ),
@@ -315,6 +318,121 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
             color: isDark
                 ? AppColors.textTertiaryDark
                 : AppColors.textTertiaryLight,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCameraGridCard(BuildContext context, CameraItem camera) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isOnline = camera.status == 'online';
+
+    return CleanCard(
+      onTap: () => _navigateToCamera(camera),
+      padding: EdgeInsets.zero,
+      enablePressAnimation: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Camera preview area
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.black.withOpacity(0.03),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Camera icon in center
+                  Center(
+                    child: Icon(
+                      Icons.videocam_outlined,
+                      size: 48,
+                      color: isDark
+                          ? Colors.white.withOpacity(0.3)
+                          : Colors.black.withOpacity(0.2),
+                    ),
+                  ),
+
+                  // Status indicator in top-right
+                  Positioned(
+                    top: AppSpacing.sm,
+                    right: AppSpacing.sm,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isOnline
+                            ? AppColors.success.withOpacity(0.9)
+                            : AppColors.warning.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isOnline ? 'LIVE' : 'OFF',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Camera info
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  camera.name,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  camera.id,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
