@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_spacing.dart';
+import '../../core/theme/app_colors.dart';
 import '../auth/login_screen.dart';
 
-/// Onboarding screens (max 3)
-/// Focus on value, not features
-/// Large typography, minimal design
+/// Onboarding screens
+/// Pure Apple style. Clean. Clear. No decoration.
+/// Steve Jobs would approve: simple message, no clutter.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -16,40 +17,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingPage> _pages = const [
-    OnboardingPage(
-      title: 'Stay informed,\nnot overwhelmed',
-      subtitle:
-          'See what matters. Your spaces, monitored with intelligence.',
-      imagePath: 'assets/images/onboarding_1.jpeg',
-      alignment: Alignment.bottomCenter,
-      textAlign: TextAlign.left,
-      titleColor: Colors.black,
-      subtitleColor: Colors.black,
-      showShadow: false,
-      padding: EdgeInsets.only(left: 24, right: 70, bottom: 50),
+  final List<_OnboardingPage> _pages = const [
+    _OnboardingPage(
+      icon: Icons.videocam_outlined,
+      title: 'Your cameras,\nwatched for you',
+      subtitle: 'AI guards monitor your spaces and notify you of what matters.',
     ),
-    OnboardingPage(
-      title: 'Your virtual\nGuards watch',
-      subtitle: 'AI-powered agents notify you of important moments only.',
-      imagePath: 'assets/images/onboarding_2.jpeg',
-      alignment: Alignment.bottomLeft,
-      textAlign: TextAlign.left,
-      titleColor: Colors.white,
-      subtitleColor: Colors.white,
-      showShadow: true,
-      padding: EdgeInsets.only(left: 32, right: 80, top: 40, bottom: 40),
+    _OnboardingPage(
+      icon: Icons.shield_outlined,
+      title: 'Smart alerts,\nnot spam',
+      subtitle: 'Get notified of important moments. No noise, just signal.',
     ),
-    OnboardingPage(
-      title: 'Complete peace\nof mind',
+    _OnboardingPage(
+      icon: Icons.done_all,
+      title: 'Complete\npeace of mind',
       subtitle: 'Everything you need to feel in control, nothing you don\'t.',
-      imagePath: 'assets/images/onboarding_3.jpeg',
-      alignment: Alignment.centerRight,
-      textAlign: TextAlign.right,
-      titleColor: Colors.white,
-      subtitleColor: Colors.white,
-      showShadow: true,
-      padding: EdgeInsets.only(left: 80, right: 15, top: 40, bottom: 250),
     ),
   ];
 
@@ -75,160 +57,143 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isLastPage = _currentPage == _pages.length - 1;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Full-screen PageView with images
-          PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
-            itemCount: _pages.length,
-            itemBuilder: (context, index) {
-              return _buildPage(context, _pages[index], index);
-            },
-          ),
-
-          // UI overlay
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                children: [
-                  // Skip button - top left
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: GestureDetector(
-                      onTap: _navigateToLogin,
-                      child: Text(
-                        'Skip',
-                        style: TextStyle(
-                          color: _pages[_currentPage].titleColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Round continue button - bottom right
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: _pages[_currentPage].buttonColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          if (_currentPage < _pages.length - 1) {
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          } else {
-                            _navigateToLogin();
-                          }
-                        },
-                        icon: Icon(
-                          Icons.arrow_forward,
-                          color: _pages[_currentPage].buttonIconColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Pages
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPage = index;
+                  });
+                },
+                itemCount: _pages.length,
+                itemBuilder: (context, index) {
+                  return _buildPage(context, _pages[index]);
+                },
               ),
             ),
-          ),
-        ],
+
+            // Page indicators
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _pages.length,
+                (index) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentPage == index
+                        ? AppColors.primary
+                        : (isDark
+                            ? Colors.white.withOpacity(0.3)
+                            : Colors.black.withOpacity(0.2)),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.xl),
+
+            // Continue button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (isLastPage) {
+                      _navigateToLogin();
+                    } else {
+                      _pageController.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    isLastPage ? 'Get Started' : 'Continue',
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.xl),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildPage(BuildContext context, OnboardingPage page, int index) {
+  Widget _buildPage(BuildContext context, _OnboardingPage page) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return SizedBox.expand(
-      child: Stack(
-        fit: StackFit.expand,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Background image - full screen
-          Image.asset(
-            page.imagePath,
-            fit: BoxFit.cover,
-            alignment: const Alignment(-0.4, 0), // Slightly shifted to the right
-            width: double.infinity,
-            height: double.infinity,
+          // Icon
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              page.icon,
+              size: 56,
+              color: AppColors.primary,
+            ),
           ),
 
-          // Content overlay
-          SafeArea(
-            child: Align(
-              alignment: page.alignment,
-              child: Padding(
-                padding: page.padding ??
-                    const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xl,
-                      vertical: AppSpacing.xl,
-                    ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: page.textAlign == TextAlign.left
-                      ? CrossAxisAlignment.start
-                      : page.textAlign == TextAlign.right
-                          ? CrossAxisAlignment.end
-                          : CrossAxisAlignment.center,
-                  children: [
-                    // Title
-                    Text(
-                      page.title,
-                      style: theme.textTheme.displayMedium?.copyWith(
-                        color: page.titleColor,
-                        fontWeight: FontWeight.bold,
-                        shadows: page.showShadow
-                            ? [
-                                Shadow(
-                                  offset: const Offset(0, 2),
-                                  blurRadius: 8,
-                                  color: Colors.black.withOpacity(0.5),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      textAlign: page.textAlign,
-                    ),
+          const SizedBox(height: AppSpacing.xxxl),
 
-                    const SizedBox(height: AppSpacing.md),
+          // Title
+          Text(
+            page.title,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.displaySmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              height: 1.2,
+            ),
+          ),
 
-                    // Subtitle
-                    Text(
-                      page.subtitle,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: page.subtitleColor,
-                        shadows: page.showShadow
-                            ? [
-                                Shadow(
-                                  offset: const Offset(0, 1),
-                                  blurRadius: 4,
-                                  color: Colors.black.withOpacity(0.5),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      textAlign: page.textAlign,
-                    ),
-                  ],
-                ),
-              ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Subtitle
+          Text(
+            page.subtitle,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+              height: 1.5,
             ),
           ),
         ],
@@ -237,30 +202,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-class OnboardingPage {
+class _OnboardingPage {
+  final IconData icon;
   final String title;
   final String subtitle;
-  final String imagePath;
-  final Alignment alignment;
-  final TextAlign textAlign;
-  final Color titleColor;
-  final Color subtitleColor;
-  final bool showShadow;
-  final EdgeInsets? padding;
-  final Color buttonColor;
-  final Color buttonIconColor;
 
-  const OnboardingPage({
+  const _OnboardingPage({
+    required this.icon,
     required this.title,
     required this.subtitle,
-    required this.imagePath,
-    this.alignment = Alignment.center,
-    this.textAlign = TextAlign.center,
-    this.titleColor = Colors.white,
-    this.subtitleColor = Colors.white,
-    this.showShadow = true,
-    this.padding,
-    this.buttonColor = Colors.black,
-    this.buttonIconColor = Colors.white,
   });
 }
