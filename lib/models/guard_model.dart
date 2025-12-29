@@ -119,6 +119,9 @@ class Guard extends HiveObject {
   @HiveField(11)
   int totalCatches;
 
+  @HiveField(12)
+  bool notifyOnDetection;
+
   Guard({
     required this.id,
     required this.name,
@@ -132,6 +135,7 @@ class Guard extends HiveObject {
     this.savedCatchesCount = 0,
     this.sensitivity = 0.5,
     this.totalCatches = 0,
+    this.notifyOnDetection = true,
   })  : cameraIds = cameraIds ?? [],
         createdAt = createdAt ?? DateTime.now();
 
@@ -183,6 +187,7 @@ class Guard extends HiveObject {
     int? savedCatchesCount,
     double? sensitivity,
     int? totalCatches,
+    bool? notifyOnDetection,
   }) {
     return Guard(
       id: id,
@@ -197,6 +202,7 @@ class Guard extends HiveObject {
       savedCatchesCount: savedCatchesCount ?? this.savedCatchesCount,
       sensitivity: sensitivity ?? this.sensitivity,
       totalCatches: totalCatches ?? this.totalCatches,
+      notifyOnDetection: notifyOnDetection ?? this.notifyOnDetection,
     );
   }
 }

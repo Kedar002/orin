@@ -22,6 +22,7 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
   int _currentStep = 0;
   GuardType? _selectedType;
   final List<String> _selectedCameras = [];
+  bool _notifyOnDetection = true;
 
   // Mock camera data - in production this would come from a camera repository
   final List<Map<String, String>> _availableCameras = [
@@ -71,6 +72,7 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
       description: _selectedType!.defaultDescription,
       type: _selectedType!,
       cameraIds: _selectedCameras,
+      notifyOnDetection: _notifyOnDetection,
     );
 
     if (mounted) {
@@ -335,19 +337,75 @@ class _CreateGuardScreenState extends State<CreateGuardScreen> {
           ),
           const SizedBox(height: 32),
           Expanded(
-            child: ListView.builder(
-              itemCount: _availableCameras.length,
-              itemBuilder: (context, index) {
-                final camera = _availableCameras[index];
-                final isSelected = _selectedCameras.contains(camera['id']);
+            child: ListView(
+              children: [
+                ..._availableCameras.map((camera) {
+                  final isSelected = _selectedCameras.contains(camera['id']);
+                  return _buildCameraItem(
+                    camera['id']!,
+                    camera['name']!,
+                    isSelected,
+                    isDark,
+                  );
+                }),
 
-                return _buildCameraItem(
-                  camera['id']!,
-                  camera['name']!,
-                  isSelected,
-                  isDark,
-                );
-              },
+                const SizedBox(height: 24),
+
+                // Notification toggle
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark ? AppColors.dividerDark : AppColors.dividerLight,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.notifications_outlined,
+                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Notify me',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Get notified when this guard detects an event',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _notifyOnDetection,
+                        onChanged: (value) {
+                          setState(() {
+                            _notifyOnDetection = value;
+                          });
+                        },
+                        activeColor: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],

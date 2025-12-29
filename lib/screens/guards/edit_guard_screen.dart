@@ -27,6 +27,7 @@ class _EditGuardScreenState extends State<EditGuardScreen> {
   final ScrollController _scrollController = ScrollController();
 
   final List<String> _selectedCameras = [];
+  bool _notifyOnDetection = true;
 
   // Mock camera data - in production this would come from a camera repository
   final List<Map<String, String>> _availableCameras = [
@@ -43,6 +44,7 @@ class _EditGuardScreenState extends State<EditGuardScreen> {
     _nameController.text = widget.guard.name;
     _instructionsController.text = widget.guard.description;
     _selectedCameras.addAll(widget.guard.cameraIds);
+    _notifyOnDetection = widget.guard.notifyOnDetection;
   }
 
   @override
@@ -62,6 +64,7 @@ class _EditGuardScreenState extends State<EditGuardScreen> {
       name: _nameController.text.trim(),
       description: _instructionsController.text.trim(),
       cameraIds: _selectedCameras,
+      notifyOnDetection: _notifyOnDetection,
     );
 
     await _repository.update(updated);
@@ -74,7 +77,8 @@ class _EditGuardScreenState extends State<EditGuardScreen> {
   bool get _hasChanges {
     return _nameController.text.trim() != widget.guard.name ||
         _instructionsController.text.trim() != widget.guard.description ||
-        !_listsEqual(_selectedCameras, widget.guard.cameraIds);
+        !_listsEqual(_selectedCameras, widget.guard.cameraIds) ||
+        _notifyOnDetection != widget.guard.notifyOnDetection;
   }
 
   bool _listsEqual(List<String> a, List<String> b) {
@@ -244,6 +248,63 @@ class _EditGuardScreenState extends State<EditGuardScreen> {
               isDark,
             );
           }),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // Notification toggle
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? AppColors.dividerDark : AppColors.dividerLight,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.notifications_outlined,
+                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                  size: 24,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Notify me',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Get notified when this guard detects an event',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _notifyOnDetection,
+                  onChanged: (value) {
+                    setState(() {
+                      _notifyOnDetection = value;
+                    });
+                  },
+                  activeColor: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                ),
+              ],
+            ),
+          ),
 
           const SizedBox(height: AppSpacing.xl),
 

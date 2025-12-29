@@ -24,6 +24,7 @@ class GuardsRepository {
     required String description,
     required GuardType type,
     required List<String> cameraIds,
+    bool notifyOnDetection = true,
   }) async {
     final guard = Guard(
       id: 'guard-${DateTime.now().millisecondsSinceEpoch}',
@@ -35,6 +36,7 @@ class GuardsRepository {
       catchesThisWeek: 0,
       savedCatchesCount: 0,
       totalCatches: 0,
+      notifyOnDetection: notifyOnDetection,
     );
 
     await DatabaseService.guardsBox.put(guard.id, guard);

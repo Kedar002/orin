@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/guard_model.dart';
 import '../models/catch_model.dart';
@@ -25,9 +26,18 @@ class DatabaseService {
       Hive.registerAdapter(CatchAdapter());
     }
 
-    // Open boxes
-    await Hive.openBox<Guard>(_guardsBox);
-    await Hive.openBox<Catch>(_catchesBox);
+    // Open boxes with migration handling
+    try {
+      await Hive.openBox<Guard>(_guardsBox);
+      await Hive.openBox<Catch>(_catchesBox);
+    } catch (e) {
+      // If opening fails due to schema mismatch, delete old data and reopen
+      debugPrint('Migration required: Clearing old database format...');
+      await Hive.deleteBoxFromDisk(_guardsBox);
+      await Hive.deleteBoxFromDisk(_catchesBox);
+      await Hive.openBox<Guard>(_guardsBox);
+      await Hive.openBox<Catch>(_catchesBox);
+    }
 
     // Seed initial data if empty
     await _seedInitialData();
@@ -58,6 +68,7 @@ class DatabaseService {
         savedCatchesCount: 2,
         totalCatches: 3,
         lastDetectionAt: DateTime.now().subtract(const Duration(minutes: 2)),
+        notifyOnDetection: true,
       );
 
       final guard2 = Guard(
@@ -71,6 +82,7 @@ class DatabaseService {
         savedCatchesCount: 0,
         totalCatches: 0,
         lastDetectionAt: DateTime.now().subtract(const Duration(hours: 2)),
+        notifyOnDetection: true,
       );
 
       final guard3 = Guard(
@@ -84,6 +96,7 @@ class DatabaseService {
         savedCatchesCount: 10,
         totalCatches: 12,
         lastDetectionAt: DateTime.now().subtract(const Duration(hours: 12)),
+        notifyOnDetection: false,
       );
 
       await guardsBox.put(guard1.id, guard1);
