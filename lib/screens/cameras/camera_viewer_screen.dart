@@ -550,7 +550,11 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
         decoration: BoxDecoration(
           color: theme.scaffoldBackgroundColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -559,83 +563,85 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildSheetHandle(isDark),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Camera Info', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: AppSpacing.lg),
-                  CleanCard(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Column(
-                      children: [
-                        _buildInfoRow('Status', 'Online', AppColors.success, theme, isDark),
-                        const SizedBox(height: AppSpacing.sm),
-                        _buildInfoRow('Resolution', '1920x1080', null, theme, isDark),
-                        const SizedBox(height: AppSpacing.sm),
-                        _buildInfoRow('Frame Rate', '30 fps', null, theme, isDark),
-                        const SizedBox(height: AppSpacing.sm),
-                        _buildInfoRow('Uptime', '12d 5h 23m', null, theme, isDark),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(
-                    'ASSIGNED GUARDS',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  ...assignedGuards.map((guard) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    child: CleanCard(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: Row(
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Camera Info', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: AppSpacing.lg),
+                    CleanCard(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Column(
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(Icons.shield_outlined, size: 20, color: isDark ? Colors.white70 : Colors.black54),
-                          ),
-                          const SizedBox(width: AppSpacing.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(guard['name'] as String, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${guard['id']}  ·  ${guard['type']}',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: (guard['active'] as bool) ? AppColors.success : (isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
+                          _buildInfoRow('Status', 'Online', AppColors.success, theme, isDark),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildInfoRow('Resolution', '1920x1080', null, theme, isDark),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildInfoRow('Frame Rate', '30 fps', null, theme, isDark),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildInfoRow('Uptime', '12d 5h 23m', null, theme, isDark),
                         ],
                       ),
                     ),
-                  )),
-                ],
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(
+                      'ASSIGNED GUARDS',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    ...assignedGuards.map((guard) => Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: CleanCard(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.shield_outlined, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(guard['name'] as String, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${guard['id']}  ·  ${guard['type']}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: (guard['active'] as bool) ? AppColors.success : (isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
