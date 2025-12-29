@@ -8,6 +8,7 @@ class EventDetailScreen extends StatelessWidget {
   final String eventTitle;
   final String eventSpace;
   final String eventTime;
+  final String eventGuard;
   final String eventDescription;
 
   const EventDetailScreen({
@@ -15,6 +16,7 @@ class EventDetailScreen extends StatelessWidget {
     required this.eventTitle,
     required this.eventSpace,
     required this.eventTime,
+    required this.eventGuard,
     required this.eventDescription,
   });
 
@@ -71,7 +73,19 @@ class EventDetailScreen extends StatelessWidget {
                   style: theme.textTheme.displaySmall,
                 ),
 
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: AppSpacing.xs),
+
+                // Guard name
+                Text(
+                  eventGuard,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ),
+                ),
+
+                const SizedBox(height: AppSpacing.md),
 
                 // Space and time
                 Row(
