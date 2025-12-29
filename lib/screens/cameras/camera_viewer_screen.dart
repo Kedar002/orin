@@ -969,44 +969,63 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
                   },
                 ),
               ),
+              // Message input - matches guards chat style
               Container(
-                padding: const EdgeInsets.all(AppSpacing.lg),
                 decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1))),
+                  color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+                  border: Border(
+                    top: BorderSide(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.black.withOpacity(0.06),
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.md,
+                  right: AppSpacing.md,
+                  top: AppSpacing.sm,
+                  bottom: AppSpacing.sm,
                 ),
                 child: SafeArea(
                   child: Row(
                     children: [
                       Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: TextField(
-                            controller: _chatController,
-                            style: theme.textTheme.bodyMedium,
-                            decoration: InputDecoration(
-                              hintText: 'Message',
-                              hintStyle: TextStyle(color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        child: TextField(
+                          controller: _chatController,
+                          decoration: InputDecoration(
+                            hintText: 'Message',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide.none,
                             ),
-                            onSubmitted: (_) => _sendMessage(),
+                            filled: true,
+                            fillColor: isDark
+                                ? Colors.white.withOpacity(0.1)
+                                : Colors.black.withOpacity(0.05),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: AppSpacing.sm,
+                            ),
+                            isDense: true,
                           ),
+                          maxLines: null,
+                          onSubmitted: (_) => _sendMessage(),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _sendMessage,
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.08),
-                            shape: BoxShape.circle,
+                      const SizedBox(width: AppSpacing.sm),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.mono100Dark : AppColors.mono0,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            CupertinoIcons.arrow_up,
+                            color: isDark ? AppColors.mono0Dark : AppColors.mono100,
                           ),
-                          child: Icon(CupertinoIcons.arrow_up, size: 18, color: isDark ? Colors.white70 : Colors.black87),
+                          onPressed: _sendMessage,
                         ),
                       ),
                     ],
@@ -1238,47 +1257,53 @@ class _CameraViewerScreenState extends State<CameraViewerScreen> {
   }
 
   Widget _buildChatMessage(String message, bool isUser, String time, ThemeData theme, bool isDark) {
+    // Match guards chat style - clean monochrome message bubbles
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           if (!isUser) ...[
+            // AI message bubble (matches guard message style)
             Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05), shape: BoxShape.circle),
-              child: Icon(CupertinoIcons.sparkles, size: 14, color: isDark ? Colors.white70 : Colors.black54),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm + 2,
+              ),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Text(
+                message,
+                style: theme.textTheme.bodyMedium,
+              ),
             ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Column(
-              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isUser
-                        ? (isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.08))
-                        : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03)),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Text(message, style: theme.textTheme.bodyMedium?.copyWith(height: 1.4)),
+          ] else ...[
+            // User message bubble (monochrome primary color)
+            Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm + 2,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.mono100Dark : AppColors.mono0,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Text(
+                message,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: isDark ? AppColors.mono0Dark : AppColors.mono100,
                 ),
-                const SizedBox(height: 4),
-                Text(time, style: theme.textTheme.bodySmall?.copyWith(color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight, fontSize: 11)),
-              ],
-            ),
-          ),
-          if (isUser) ...[
-            const SizedBox(width: 8),
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05), shape: BoxShape.circle),
-              child: Icon(CupertinoIcons.person_fill, size: 14, color: isDark ? Colors.white70 : Colors.black54),
+              ),
             ),
           ],
         ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
+import '../../core/widgets/mono_status_dot.dart';
 import '../../core/theme/app_colors.dart';
 
 /// Guard detail screen
@@ -108,11 +109,22 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(widget.guardName),
-            Text(
-              _isActive ? 'Active' : 'Paused',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: _isActive ? AppColors.success : AppColors.textSecondaryLight,
-              ),
+            Row(
+              children: [
+                MonoStatusDot(
+                  type: _isActive ? MonoStatusType.active : MonoStatusType.warning,
+                  size: 6,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _isActive ? 'Active' : 'Paused',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -192,12 +204,15 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.mono100Dark : AppColors.mono0,
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(CupertinoIcons.arrow_up, color: Colors.white),
+                      icon: Icon(
+                        CupertinoIcons.arrow_up,
+                        color: isDark ? AppColors.mono0Dark : AppColors.mono100,
+                      ),
                       onPressed: () {
                         // Send message logic
                         _messageController.clear();
@@ -266,13 +281,9 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                     const SizedBox(height: AppSpacing.xs),
                     Row(
                       children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: _isActive ? AppColors.success : AppColors.textSecondaryLight,
-                            shape: BoxShape.circle,
-                          ),
+                        MonoStatusDot(
+                          type: _isActive ? MonoStatusType.active : MonoStatusType.warning,
+                          size: 8,
                         ),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
@@ -422,17 +433,9 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                       Positioned(
                         top: 6,
                         right: 6,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: AppColors.success,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-                              width: 1.5,
-                            ),
-                          ),
+                        child: MonoStatusDot(
+                          type: MonoStatusType.active,
+                          size: 8,
                         ),
                       ),
                   ],
@@ -495,13 +498,13 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                 vertical: AppSpacing.sm + 2,
               ),
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: isDark ? AppColors.mono100Dark : AppColors.mono0,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Text(
                 text,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white,
+                  color: isDark ? AppColors.mono0Dark : AppColors.mono100,
                 ),
               ),
             ),
