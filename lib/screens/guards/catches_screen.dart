@@ -5,6 +5,7 @@ import '../../core/widgets/clean_card.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/catch_model.dart';
 import '../../repositories/catches_repository.dart';
+import '../events/event_detail_screen.dart';
 
 /// Recent Catches Screen
 /// Shows detailed list of all catches made by a guard
@@ -243,8 +244,17 @@ class _CatchesScreenState extends State<CatchesScreen> {
 
     return CleanCard(
       onTap: () {
-        // TODO: Could navigate to camera viewer or event detail
-        // Could also show save/star and notes functionality here
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => EventDetailScreen(
+              eventTitle: catch_.title,
+              eventSpace: catch_.cameraName,
+              eventTime: catch_.formattedTime,
+              eventGuard: widget.guardName,
+              eventDescription: catch_.description,
+            ),
+          ),
+        );
       },
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
