@@ -7,10 +7,13 @@ import '../../core/widgets/mono_live_badge.dart';
 import '../../core/widgets/mono_status_dot.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/guard_model.dart';
+import '../../models/catch_model.dart';
 import '../../repositories/guards_repository.dart';
+import '../../repositories/catches_repository.dart';
 import '../cameras/camera_viewer_screen.dart';
 import '../cameras/cameras_grid_screen.dart';
 import '../guards/guard_detail_screen.dart';
+import '../events/event_detail_screen.dart';
 
 /// Command Center - Camera-first design (Apple Home style)
 /// Cameras are the hero - status shown visually on cards
@@ -23,17 +26,29 @@ class CommandCenterScreen extends StatefulWidget {
 
 class _CommandCenterScreenState extends State<CommandCenterScreen> {
   final GuardsRepository _guardsRepository = GuardsRepository();
+  final CatchesRepository _catchesRepository = CatchesRepository();
   List<Guard> _activeGuards = [];
+  List<Catch> _recentCatches = [];
 
   @override
   void initState() {
     super.initState();
     _loadActiveGuards();
+    _loadRecentCatches();
   }
 
   void _loadActiveGuards() {
     setState(() {
       _activeGuards = _guardsRepository.getActive();
+    });
+  }
+
+  void _loadRecentCatches() {
+    setState(() {
+      // Get all catches and sort by timestamp, take the 5 most recent
+      final allCatches = _catchesRepository.getAll();
+      allCatches.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      _recentCatches = allCatches.take(5).toList();
     });
   }
 
@@ -61,7 +76,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
     final onlineCameras = cameras.where((c) => c['active'] as bool).length;
     final totalCameras = cameras.length;
     final activeGuardsCount = _activeGuards.length;
-    final hasAlerts = _getRecentEvents().isNotEmpty;
+    final hasRecentActivity = _recentCatches.isNotEmpty;
 
     return Scaffold(
       body: SafeArea(
@@ -198,8 +213,8 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               ),
             ],
 
-            // Recent Activity - Only if there are alerts
-            if (hasAlerts) ...[
+            // Recent Activity - Only if there are recent catches
+            if (hasRecentActivity) ...[
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -209,7 +224,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                     AppSpacing.sm,
                   ),
                   child: Text(
-                    'RECENT ACTIVITY',
+                    'LATEST CATCHES',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: isDark
                           ? AppColors.textSecondaryDark
@@ -224,13 +239,12 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      final events = _getRecentEvents();
                       return Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        child: _buildEventRow(context, events[index]),
+                        child: _buildEventRow(context, _recentCatches[index]),
                       );
                     },
-                    childCount: _getRecentEvents().length,
+                    childCount: _recentCatches.length,
                   ),
                 ),
               ),
@@ -477,11 +491,46 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
     );
   }
 
-  Widget _buildEventRow(BuildContext context, Map<String, dynamic> event) {
+  Widget _buildEventRow(BuildContext context, Catch catch_) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    // Get guard name for display
+    final guard = _guardsRepository.getById(catch_.guardId);
+    final guardName = guard?.name ?? 'Unknown Guard';
+
+    // Get icon based on catch type
+    IconData getIcon() {
+      switch (catch_.type) {
+        case CatchType.delivery:
+          return Icons.inventory_2_outlined;
+        case CatchType.person:
+          return Icons.person_outline;
+        case CatchType.vehicle:
+          return Icons.directions_car_outlined;
+        case CatchType.pet:
+          return Icons.pets_outlined;
+        case CatchType.motion:
+          return Icons.motion_photos_on_outlined;
+        case CatchType.other:
+          return CupertinoIcons.bell;
+      }
+    }
+
     return CleanCard(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => EventDetailScreen(
+              eventTitle: catch_.title,
+              eventSpace: catch_.cameraName,
+              eventTime: catch_.formattedTime,
+              eventGuard: guardName,
+              eventDescription: catch_.description,
+            ),
+          ),
+        );
+      },
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.md,
@@ -498,7 +547,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              CupertinoIcons.bell,
+              getIcon(),
               size: 20,
               color: isDark ? Colors.white70 : Colors.black54,
             ),
@@ -510,7 +559,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  event['title'] as String,
+                  catch_.title,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
@@ -519,7 +568,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  event['subtitle'] as String,
+                  '${catch_.cameraName} • $guardName',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: isDark
                         ? AppColors.textSecondaryDark
@@ -535,7 +584,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
           const SizedBox(width: AppSpacing.sm),
 
           Text(
-            event['time'] as String,
+            catch_.relativeTime,
             style: theme.textTheme.bodySmall?.copyWith(
               color: isDark
                   ? AppColors.textTertiaryDark
@@ -558,18 +607,4 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
     ];
   }
 
-  List<Map<String, dynamic>> _getRecentEvents() {
-    return [
-      {
-        'title': 'Motion detected',
-        'subtitle': 'CAM-05 • Parking Lot',
-        'time': '2m ago',
-      },
-      {
-        'title': 'Camera offline',
-        'subtitle': 'CAM-04 • Server Room',
-        'time': '15m ago',
-      },
-    ];
-  }
 }
