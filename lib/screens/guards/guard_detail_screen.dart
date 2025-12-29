@@ -4,6 +4,7 @@ import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
 import '../../core/widgets/mono_status_dot.dart';
 import '../../core/theme/app_colors.dart';
+import 'catches_screen.dart';
 
 /// Guard detail screen
 /// Think like Steve Jobs: A Guard is your AI assistant for security.
@@ -336,12 +337,48 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
 
                     const SizedBox(height: AppSpacing.xl),
 
-                    // Recent catches
-                    Text(
-                      'Recent catches',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                    // Recent catches with View All
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Recent catches',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => CatchesScreen(
+                                  guardName: widget.guardName,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              Text(
+                                'View All',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: isDark
+                                      ? AppColors.textSecondaryDark
+                                      : AppColors.textSecondaryLight,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                CupertinoIcons.chevron_right,
+                                size: 16,
+                                color: isDark
+                                    ? AppColors.textSecondaryDark
+                                    : AppColors.textSecondaryLight,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: AppSpacing.md),
                     ...catches.map((catch_) => _buildCatchRow(context, catch_, isDark, catch_ == catches.last)),
@@ -358,39 +395,58 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
   }
 
   Widget _buildCatchRow(BuildContext context, Map<String, String> catch_, bool isDark, bool isLast) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: isLast
-                ? Colors.transparent
-                : (isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.black.withOpacity(0.06)),
-            width: 0.5,
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => CatchesScreen(
+              guardName: widget.guardName,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isLast
+                  ? Colors.transparent
+                  : (isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.06)),
+              width: 0.5,
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              catch_['title']!,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w500,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                catch_['title']!,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-          ),
-          Text(
-            catch_['time']!,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
+            Text(
+              catch_['time']!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: AppSpacing.xs),
+            Icon(
+              CupertinoIcons.chevron_right,
+              size: 16,
+              color: isDark
+                  ? AppColors.textTertiaryDark
+                  : AppColors.textTertiaryLight,
+            ),
+          ],
+        ),
       ),
     );
   }
