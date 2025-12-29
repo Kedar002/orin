@@ -82,22 +82,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // Page indicators
+            // Monochrome page indicators
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 _pages.length,
-                (index) => Container(
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _currentPage == index
-                        ? AppColors.primary
-                        : (isDark
-                            ? Colors.white.withOpacity(0.3)
-                            : Colors.black.withOpacity(0.2)),
+                        ? (isDark ? AppColors.mono100Dark : AppColors.mono0)
+                        : (isDark ? AppColors.mono30Dark : AppColors.mono90),
                   ),
                 ),
               ),
@@ -122,14 +121,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       );
                     }
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                  // Using theme defaults (already monochrome)
                   child: Text(
                     isLastPage ? 'Get Started' : 'Continue',
                     style: const TextStyle(
@@ -157,18 +149,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Icon
+          // Monochrome icon
           Container(
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: isDark
+                  ? AppColors.mono10Dark
+                  : AppColors.mono95,
               shape: BoxShape.circle,
             ),
             child: Icon(
               page.icon,
               size: 56,
-              color: AppColors.primary,
+              color: isDark ? AppColors.mono100Dark : AppColors.mono0,
             ),
           ),
 

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 /// Hierarchical Space Model - Supports nesting up to 10 levels
+/// Pure monochrome design - color field deprecated
 class SpaceItem {
   final String id;
   String name;
   IconData icon;
-  Color color;
+  Color? color; // Optional - deprecated for monochrome design
   final int level; // Current nesting level (0-9, max 10 levels)
   final List<SpaceItem> subSpaces;
   final List<CameraItem> cameras;
@@ -15,7 +16,7 @@ class SpaceItem {
     required this.id,
     required this.name,
     required this.icon,
-    required this.color,
+    this.color, // Optional for monochrome
     this.level = 0,
     List<SpaceItem>? subSpaces,
     List<CameraItem>? cameras,

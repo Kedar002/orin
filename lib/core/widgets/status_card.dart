@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_spacing.dart';
 import '../theme/app_colors.dart';
 import 'clean_card.dart';
+import 'mono_status_dot.dart';
 
 /// Status card for displaying calm, confidence-inspiring information
 /// No numbers, no charts - just clear status messaging
@@ -32,14 +33,10 @@ class StatusCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Status indicator dot
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: isGood ? AppColors.success : AppColors.warning,
-                  shape: BoxShape.circle,
-                ),
+              // Monochrome status indicator dot
+              MonoStatusDot(
+                type: isGood ? MonoStatusType.active : MonoStatusType.warning,
+                size: 8,
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
@@ -49,6 +46,8 @@ class StatusCard extends StatelessWidget {
                     color: isDark
                         ? AppColors.textSecondaryDark
                         : AppColors.textSecondaryLight,
+                    // Add weight variation for hierarchy
+                    fontWeight: isGood ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
               ),

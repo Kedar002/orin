@@ -135,9 +135,10 @@ class _NavBarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Monochrome color scheme with weight variation
     final color = isSelected
-        ? AppColors.primary
-        : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight);
+        ? (isDark ? AppColors.mono100Dark : AppColors.mono0)
+        : (isDark ? AppColors.mono60Dark : AppColors.mono70);
 
     return GestureDetector(
       onTap: onTap,
@@ -147,20 +148,28 @@ class _NavBarButton extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              isSelected ? item.activeIcon : item.icon,
-              size: 25,
-              color: color,
+            // Smooth color transition
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              child: Icon(
+                isSelected ? item.activeIcon : item.icon,
+                size: 25,
+                color: color,
+              ),
             ),
             const SizedBox(height: 2),
-            Text(
-              item.label,
+            // Smooth color and weight transition
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: color,
                 letterSpacing: 0,
               ),
+              child: Text(item.label),
             ),
           ],
         ),

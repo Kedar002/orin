@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
+import '../../core/widgets/mono_status_dot.dart';
 import '../../core/theme/app_colors.dart';
 import 'guard_detail_screen.dart';
 
@@ -15,7 +16,7 @@ class GuardsScreen extends StatefulWidget {
 }
 
 class _GuardsScreenState extends State<GuardsScreen> {
-  // Mock guards data with icons and colors
+  // Mock guards data - pure monochrome
   final List<Map<String, dynamic>> _guards = [
     {
       'name': 'Package Watch',
@@ -23,7 +24,6 @@ class _GuardsScreenState extends State<GuardsScreen> {
       'status': 'active',
       'description': 'Alerts when packages are delivered',
       'icon': Icons.inventory_2_outlined,
-      'color': const Color(0xFF6B4CE6),
       'alertsToday': 3,
     },
     {
@@ -32,7 +32,6 @@ class _GuardsScreenState extends State<GuardsScreen> {
       'status': 'active',
       'description': 'Monitors pool area for safety',
       'icon': Icons.pool_outlined,
-      'color': const Color(0xFF2196F3),
       'alertsToday': 0,
     },
     {
@@ -41,7 +40,6 @@ class _GuardsScreenState extends State<GuardsScreen> {
       'status': 'paused',
       'description': 'Active during night hours only',
       'icon': Icons.nightlight_outlined,
-      'color': const Color(0xFF7C4DFF),
       'alertsToday': 12,
     },
     {
@@ -50,7 +48,6 @@ class _GuardsScreenState extends State<GuardsScreen> {
       'status': 'active',
       'description': 'Watches for pet activity',
       'icon': Icons.pets_outlined,
-      'color': const Color(0xFFFF9800),
       'alertsToday': 8,
     },
   ];
@@ -179,13 +176,9 @@ class _GuardsScreenState extends State<GuardsScreen> {
                       ),
                     ),
                     const SizedBox(width: AppSpacing.xs),
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: isActive ? AppColors.success : AppColors.warning,
-                        shape: BoxShape.circle,
-                      ),
+                    MonoStatusDot(
+                      type: isActive ? MonoStatusType.active : MonoStatusType.warning,
+                      size: 8,
                     ),
                   ],
                 ),

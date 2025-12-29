@@ -15,12 +15,12 @@ class SpacesScreen extends StatefulWidget {
 }
 
 class _SpacesScreenState extends State<SpacesScreen> {
+  // Pure monochrome spaces - no colors
   List<SpaceItem> _spaces = [
     SpaceItem(
       id: 'SPACE-001',
       name: 'Hospital A',
       icon: Icons.local_hospital,
-      color: const Color(0xFF6B4CE6),
       level: 0,
       cameras: [
         CameraItem(
@@ -41,7 +41,6 @@ class _SpacesScreenState extends State<SpacesScreen> {
       id: 'SPACE-002',
       name: 'Hospital B',
       icon: Icons.local_hospital,
-      color: const Color(0xFF0EA5E9),
       level: 0,
       cameras: [
         CameraItem(
@@ -56,7 +55,6 @@ class _SpacesScreenState extends State<SpacesScreen> {
       id: 'SPACE-003',
       name: 'Hospital C',
       icon: Icons.local_hospital,
-      color: const Color(0xFF10B981),
       level: 0,
     ),
   ];

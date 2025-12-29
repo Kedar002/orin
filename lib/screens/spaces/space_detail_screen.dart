@@ -689,11 +689,11 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
 
                       // Add the new sub-space
                       setState(() {
+                        // Pure monochrome - no color
                         final newSubSpace = SpaceItem(
                           id: 'SPACE-${DateTime.now().millisecondsSinceEpoch}',
                           name: name,
                           icon: selectedIcon,
-                          color: const Color(0xFF6B4CE6),
                           level: _currentSpace.level + 1,
                         );
                         _currentSpace.subSpaces.add(newSubSpace);

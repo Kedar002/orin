@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
 import '../../core/widgets/video_thumbnail.dart';
+import '../../core/widgets/mono_live_badge.dart';
+import '../../core/widgets/mono_status_dot.dart';
 import '../../core/theme/app_colors.dart';
 import '../cameras/camera_viewer_screen.dart';
 import '../cameras/cameras_grid_screen.dart';
@@ -279,51 +281,12 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                       ),
                     ),
 
-                  // Live indicator
+                  // Monochrome LIVE badge
                   if (isActive)
-                    Positioned(
+                    const Positioned(
                       top: 8,
                       left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 5,
-                              height: 5,
-                              decoration: BoxDecoration(
-                                color: AppColors.success,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.success.withOpacity(0.5),
-                                    blurRadius: 3,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'LIVE',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: MonoLiveBadge(),
                     ),
 
                   // Offline overlay
@@ -455,14 +418,10 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
             ),
           ),
 
-          // Status dot
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: isActive ? AppColors.success : AppColors.textTertiaryDark,
-              shape: BoxShape.circle,
-            ),
+          // Monochrome status dot
+          MonoStatusDot(
+            type: isActive ? MonoStatusType.active : MonoStatusType.inactive,
+            size: 8,
           ),
         ],
       ),
