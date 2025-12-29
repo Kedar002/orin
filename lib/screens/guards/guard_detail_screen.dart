@@ -9,6 +9,7 @@ import '../../models/catch_model.dart';
 import '../../repositories/guards_repository.dart';
 import '../../repositories/catches_repository.dart';
 import 'catches_screen.dart';
+import 'edit_guard_screen.dart';
 
 /// Guard detail screen
 /// Think like Steve Jobs: A Guard is your AI assistant for security.
@@ -312,9 +313,18 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                         ),
                         IconButton(
                           icon: const Icon(CupertinoIcons.pencil),
-                          onPressed: () {
-                            // TODO: Show edit dialog
-                            Navigator.pop(context);
+                          onPressed: () async {
+                            Navigator.pop(context); // Close the info sheet first
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => EditGuardScreen(guard: _guard),
+                              ),
+                            );
+
+                            // Reload guard data if changes were made
+                            if (result == true) {
+                              _loadGuardData();
+                            }
                           },
                         ),
                       ],
@@ -367,15 +377,6 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
                             context,
                             '${_guard.totalCatches}',
                             'All time',
-                            isDark,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: _buildStatCard(
-                            context,
-                            '${_guard.successRate}%',
-                            'Success rate',
                             isDark,
                           ),
                         ),
