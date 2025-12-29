@@ -3,16 +3,18 @@ import '../../core/constants/app_spacing.dart';
 import '../../core/theme/app_colors.dart';
 
 /// Settings screen
-/// Clean list layout with sections
-/// Account, Notifications, Devices, Billing, System Health
+/// Pure iOS style. Clean. Minimal. Functional.
+/// Steve Jobs would approve: no decoration, just content.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -21,139 +23,99 @@ class SettingsScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.lg,
+                  AppSpacing.xl,
                   AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.md,
+                  AppSpacing.sm,
                 ),
                 child: Text(
                   'Settings',
-                  style: theme.textTheme.displayLarge,
+                  style: theme.textTheme.displayLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
 
-            // Settings list
+            // Account section
+            _buildSection(
+              context,
+              title: 'ACCOUNT',
+              items: [
+                _SettingsItem(title: 'Profile', onTap: () {}),
+                _SettingsItem(title: 'Password & Security', onTap: () {}),
+              ],
+            ),
+
+            // Notifications section
+            _buildSection(
+              context,
+              title: 'NOTIFICATIONS',
+              items: [
+                _SettingsItem(title: 'Alert Preferences', onTap: () {}),
+                _SettingsItem(title: 'Quiet Hours', onTap: () {}),
+              ],
+            ),
+
+            // Devices section
+            _buildSection(
+              context,
+              title: 'DEVICES',
+              items: [
+                _SettingsItem(title: 'Manage Cameras', onTap: () {}),
+                _SettingsItem(title: 'Network Settings', onTap: () {}),
+              ],
+            ),
+
+            // Billing section
+            _buildSection(
+              context,
+              title: 'BILLING',
+              items: [
+                _SettingsItem(title: 'Payment Method', onTap: () {}),
+                _SettingsItem(title: 'Subscription', onTap: () {}),
+              ],
+            ),
+
+            // System section
+            _buildSection(
+              context,
+              title: 'SYSTEM',
+              items: [
+                _SettingsItem(title: 'System Health', onTap: () {}),
+                _SettingsItem(title: 'Storage', onTap: () {}),
+                _SettingsItem(title: 'About', onTap: () {}),
+              ],
+            ),
+
+            // Sign out
             SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  // Account section
-                  _buildSection(
-                    context,
-                    title: 'Account',
-                    items: [
-                      _SettingsItem(
-                        icon: Icons.person_outline,
-                        title: 'Profile',
-                        onTap: () {},
-                      ),
-                      _SettingsItem(
-                        icon: Icons.lock_outline,
-                        title: 'Password & Security',
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-
-                  // Notifications section
-                  _buildSection(
-                    context,
-                    title: 'Notifications',
-                    items: [
-                      _SettingsItem(
-                        icon: Icons.notifications_outlined,
-                        title: 'Alert Preferences',
-                        onTap: () {},
-                      ),
-                      _SettingsItem(
-                        icon: Icons.schedule_outlined,
-                        title: 'Quiet Hours',
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-
-                  // Devices section
-                  _buildSection(
-                    context,
-                    title: 'Devices',
-                    items: [
-                      _SettingsItem(
-                        icon: Icons.videocam_outlined,
-                        title: 'Manage Cameras',
-                        onTap: () {},
-                      ),
-                      _SettingsItem(
-                        icon: Icons.wifi_outlined,
-                        title: 'Network Settings',
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-
-                  // Billing section
-                  _buildSection(
-                    context,
-                    title: 'Billing',
-                    items: [
-                      _SettingsItem(
-                        icon: Icons.credit_card_outlined,
-                        title: 'Payment Method',
-                        onTap: () {},
-                      ),
-                      _SettingsItem(
-                        icon: Icons.receipt_outlined,
-                        title: 'Subscription',
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-
-                  // System Health section
-                  _buildSection(
-                    context,
-                    title: 'System',
-                    items: [
-                      _SettingsItem(
-                        icon: Icons.health_and_safety_outlined,
-                        title: 'System Health',
-                        onTap: () {},
-                      ),
-                      _SettingsItem(
-                        icon: Icons.storage_outlined,
-                        title: 'Storage',
-                        onTap: () {},
-                      ),
-                      _SettingsItem(
-                        icon: Icons.info_outline,
-                        title: 'About',
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-
-                  // Sign out
-                  const SizedBox(height: AppSpacing.lg),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: TextButton(
-                        onPressed: () {
-                          // Mock action - sign out
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.error,
-                        ),
-                        child: const Text('Sign Out'),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                ),
+                child: Center(
+                  child: TextButton(
+                    onPressed: () {
+                      // Mock action - sign out
+                    },
+                    child: Text(
+                      'Sign Out',
+                      style: TextStyle(
+                        color: AppColors.error,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: AppSpacing.xl),
-                ],
+                ),
               ),
+            ),
+
+            const SliverToBoxAdapter(
+              child: SizedBox(height: AppSpacing.xl),
             ),
           ],
         ),
@@ -169,82 +131,85 @@ class SettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section title
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.sm,
-          ),
-          child: Text(
-            title,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
+    return SliverMainAxisGroup(
+      slivers: [
+        // Section header
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.xs,
+            ),
+            child: Text(
+              title,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.8,
+              ),
             ),
           ),
         ),
 
         // Section items
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.cardDark : AppColors.cardLight,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: [
-              for (var i = 0; i < items.length; i++) ...[
-                if (i > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 56),
-                    child: Divider(
-                      height: 1,
-                      color: isDark
-                          ? AppColors.dividerDark
-                          : AppColors.dividerLight,
-                    ),
-                  ),
-                _buildSettingsItem(context, items[i]),
-              ],
-            ],
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final item = items[index];
+              final isLast = index == items.length - 1;
+              return _buildSettingsRow(context, item, isDark, isLast);
+            },
+            childCount: items.length,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSettingsItem(BuildContext context, _SettingsItem item) {
+  Widget _buildSettingsRow(
+    BuildContext context,
+    _SettingsItem item,
+    bool isDark,
+    bool isLast,
+  ) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return InkWell(
       onTap: item.onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isLast
+                  ? Colors.transparent
+                  : (isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.06)),
+              width: 0.5,
+            ),
+          ),
+        ),
         child: Row(
           children: [
-            Icon(
-              item.icon,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
-            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Text(
                 item.title,
-                style: theme.textTheme.bodyLarge,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ),
             Icon(
               Icons.chevron_right,
+              size: 20,
               color: isDark
                   ? AppColors.textTertiaryDark
                   : AppColors.textTertiaryLight,
@@ -257,12 +222,10 @@ class SettingsScreen extends StatelessWidget {
 }
 
 class _SettingsItem {
-  final IconData icon;
   final String title;
   final VoidCallback onTap;
 
   _SettingsItem({
-    required this.icon,
     required this.title,
     required this.onTap,
   });
