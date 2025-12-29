@@ -6,8 +6,11 @@ import '../../core/widgets/video_thumbnail.dart';
 import '../../core/widgets/mono_live_badge.dart';
 import '../../core/widgets/mono_status_dot.dart';
 import '../../core/theme/app_colors.dart';
+import '../../models/guard_model.dart';
+import '../../repositories/guards_repository.dart';
 import '../cameras/camera_viewer_screen.dart';
 import '../cameras/cameras_grid_screen.dart';
+import '../guards/guard_detail_screen.dart';
 
 /// Command Center - Camera-first design (Apple Home style)
 /// Cameras are the hero - status shown visually on cards
@@ -19,6 +22,21 @@ class CommandCenterScreen extends StatefulWidget {
 }
 
 class _CommandCenterScreenState extends State<CommandCenterScreen> {
+  final GuardsRepository _guardsRepository = GuardsRepository();
+  List<Guard> _activeGuards = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadActiveGuards();
+  }
+
+  void _loadActiveGuards() {
+    setState(() {
+      _activeGuards = _guardsRepository.getActive();
+    });
+  }
+
   String _getStreamUrlForCamera(String cameraId) {
     final number = int.tryParse(cameraId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
 
@@ -40,10 +58,9 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     final cameras = _getCameras();
-    final guards = _getGuards();
     final onlineCameras = cameras.where((c) => c['active'] as bool).length;
     final totalCameras = cameras.length;
-    final activeGuards = guards.where((g) => g['active'] as bool).length;
+    final activeGuardsCount = _activeGuards.length;
     final hasAlerts = _getRecentEvents().isNotEmpty;
 
     return Scaffold(
@@ -71,7 +88,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      '$onlineCameras/$totalCameras Cameras  ·  $activeGuards Guards',
+                      '$onlineCameras/$totalCameras Cameras  ·  $activeGuardsCount on duty',
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: isDark
                             ? AppColors.textSecondaryDark
@@ -143,41 +160,43 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               ),
             ),
 
-            // Guards Section
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.md,
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                ),
-                child: Text(
-                  'GUARDS',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                    letterSpacing: 0.5,
+            // Guards Section - Only show if there are active guards
+            if (_activeGuards.isNotEmpty) ...[
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.md,
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                  ),
+                  child: Text(
+                    'ON DUTY',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                      child: _buildGuardRow(context, guards[index]),
-                    );
-                  },
-                  childCount: guards.length,
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        child: _buildGuardRow(context, _activeGuards[index]),
+                      );
+                    },
+                    childCount: _activeGuards.length,
+                  ),
                 ),
               ),
-            ),
+            ],
 
             // Recent Activity - Only if there are alerts
             if (hasAlerts) ...[
@@ -361,12 +380,27 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
     );
   }
 
-  Widget _buildGuardRow(BuildContext context, Map<String, dynamic> guard) {
+  Widget _buildGuardRow(BuildContext context, Guard guard) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isActive = guard['active'] as bool;
 
     return CleanCard(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => GuardDetailScreen(
+              guardId: guard.id,
+              guardName: guard.name,
+              guardSpace: guard.type.displayName,
+              guardDescription: guard.description,
+              isActive: guard.isActive,
+            ),
+          ),
+        ).then((_) {
+          // Reload guards when returning from detail screen
+          _loadActiveGuards();
+        });
+      },
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
@@ -384,7 +418,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              CupertinoIcons.shield,
+              guard.type.icon,
               size: 18,
               color: isDark ? Colors.white70 : Colors.black54,
             ),
@@ -397,7 +431,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  guard['name'] as String,
+                  guard.name,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
@@ -405,14 +439,29 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 1),
-                Text(
-                  guard['type'] as String,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                    fontSize: 12,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      guard.type.displayName,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (guard.catchesThisWeek > 0) ...[
+                      Text(
+                        '  •  ${guard.catchesThisWeek} this week',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -420,7 +469,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
 
           // Monochrome status dot
           MonoStatusDot(
-            type: isActive ? MonoStatusType.active : MonoStatusType.inactive,
+            type: guard.isActive ? MonoStatusType.active : MonoStatusType.inactive,
             size: 8,
           ),
         ],
@@ -506,14 +555,6 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
       {'id': 'CAM-04', 'name': 'Server Room', 'location': 'Building B', 'active': false},
       {'id': 'CAM-05', 'name': 'Cafeteria', 'location': 'Building A', 'active': true},
       {'id': 'CAM-06', 'name': 'Warehouse', 'location': 'Building C', 'active': true},
-    ];
-  }
-
-  List<Map<String, dynamic>> _getGuards() {
-    return [
-      {'id': 'G-01', 'name': 'Motion Guard', 'type': 'Motion Detection', 'active': true},
-      {'id': 'G-02', 'name': 'Person Guard', 'type': 'Person Detection', 'active': true},
-      {'id': 'G-03', 'name': 'Intrusion Guard', 'type': 'Area Protection', 'active': true},
     ];
   }
 
