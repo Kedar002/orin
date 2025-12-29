@@ -8,6 +8,8 @@ import '../../models/guard_model.dart';
 import '../../models/catch_model.dart';
 import '../../repositories/guards_repository.dart';
 import '../../repositories/catches_repository.dart';
+import '../cameras/camera_viewer_screen.dart';
+import '../events/event_detail_screen.dart';
 import 'catches_screen.dart';
 import 'edit_guard_screen.dart';
 
@@ -70,6 +72,22 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
   Future<void> _toggleActive() async {
     await _guardsRepository.toggleActive(widget.guardId);
     _loadGuardData();
+  }
+
+  // Get stream URL for camera - mock data, in production this comes from backend
+  String _getStreamUrlForCamera(String cameraId) {
+    final number = int.tryParse(cameraId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+    final demoStreams = [
+      'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8',
+      'https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8',
+      'https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8',
+      'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
+      'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.mp4/.m3u8',
+      'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    ];
+
+    return demoStreams[number % demoStreams.length];
   }
 
   // Mock cameras where this guard is watching - in production, load from camera repository
@@ -539,9 +557,12 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => CatchesScreen(
-              guardId: _guard.id,
-              guardName: _guard.name,
+            builder: (context) => EventDetailScreen(
+              eventTitle: catch_.title,
+              eventSpace: catch_.cameraName,
+              eventTime: catch_.formattedTime,
+              eventGuard: _guard.name,
+              eventDescription: catch_.description,
             ),
           ),
         );
@@ -619,9 +640,22 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
 
   Widget _buildCameraCard(BuildContext context, Map<String, dynamic> camera, bool isDark) {
     final isOnline = camera['status'] == 'online';
+    final cameraId = camera['id'] as String;
+    final cameraName = camera['name'] as String;
 
     return CleanCard(
-      onTap: () {},
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => CameraViewerScreen(
+              cameraId: cameraId,
+              cameraName: cameraName,
+              location: _guard.name, // Show guard name as location
+              streamUrl: _getStreamUrlForCamera(cameraId),
+            ),
+          ),
+        );
+      },
       padding: EdgeInsets.zero,
       enablePressAnimation: true,
       child: SizedBox(
