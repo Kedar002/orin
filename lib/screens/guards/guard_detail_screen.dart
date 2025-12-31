@@ -8,7 +8,7 @@ import '../../models/guard_model.dart';
 import '../../models/catch_model.dart';
 import '../../repositories/guards_repository.dart';
 import '../../repositories/catches_repository.dart';
-import '../cameras/camera_viewer_screen.dart';
+import '../cameras/enhanced_camera_viewer_screen.dart';
 import '../events/event_detail_screen.dart';
 import 'catches_screen.dart';
 import 'edit_guard_screen.dart';
@@ -647,7 +647,7 @@ class _GuardDetailScreenState extends State<GuardDetailScreen> {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => CameraViewerScreen(
+            builder: (context) => EnhancedCameraViewerScreen(
               cameraId: cameraId,
               cameraName: cameraName,
               location: _guard.name, // Show guard name as location

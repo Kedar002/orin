@@ -1,0 +1,2000 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+import 'package:video_player/video_player.dart';
+import 'package:intl/intl.dart';
+import '../../core/constants/app_spacing.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/clean_card.dart';
+import '../../core/widgets/video_thumbnail.dart';
+
+/// Enhanced Camera Viewer - HikVision-style with Steve Jobs design
+/// Live/Playback modes + Multi-camera grid + All original features
+class EnhancedCameraViewerScreen extends StatefulWidget {
+  final String cameraId;
+  final String cameraName;
+  final String location;
+  final String? streamUrl;
+
+  const EnhancedCameraViewerScreen({
+    super.key,
+    required this.cameraId,
+    required this.cameraName,
+    required this.location,
+    this.streamUrl,
+  });
+
+  @override
+  State<EnhancedCameraViewerScreen> createState() => _EnhancedCameraViewerScreenState();
+}
+
+class _EnhancedCameraViewerScreenState extends State<EnhancedCameraViewerScreen> {
+  // View Mode (NEW)
+  bool _isLiveMode = true;
+
+  // Video Control
+  bool _showControls = true;
+  bool _isPlaying = true;
+  double _progress = 0.0;
+  late VideoPlayerController _videoController;
+  bool _isVideoInitialized = false;
+  Timer? _controlsTimer;
+
+  // Playback Controls (NEW)
+  double _playbackSpeed = 1.0;
+  DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
+
+  // Timeline (simulated motion events) (NEW)
+  final List<double> _motionEvents = [0.1, 0.15, 0.23, 0.45, 0.67, 0.82, 0.93];
+
+  // AI Chat
+  final TextEditingController _chatController = TextEditingController();
+  final List<Map<String, dynamic>> _chatMessages = [
+    {
+      'isUser': false,
+      'message': 'Hello! I can help you analyze this camera feed. What would you like to know?',
+      'time': '10:30 AM',
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    _initializeVideo();
+    _startControlsTimer();
+  }
+
+  Future<void> _initializeVideo() async {
+    String streamUrl = widget.streamUrl ?? _getStreamUrlForCamera(widget.cameraId);
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(streamUrl));
+    await _videoController.initialize();
+    _videoController.setLooping(true);
+    _videoController.play();
+
+    _videoController.addListener(() {
+      if (_videoController.value.isInitialized) {
+        setState(() {
+          _progress = _videoController.value.position.inMilliseconds /
+              _videoController.value.duration.inMilliseconds;
+          _isPlaying = _videoController.value.isPlaying;
+        });
+      }
+    });
+
+    setState(() {
+      _isVideoInitialized = true;
+    });
+  }
+
+  String _getStreamUrlForCamera(String cameraId) {
+    final number = int.tryParse(cameraId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    final demoStreams = [
+      'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8',
+      'https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8',
+      'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
+      'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.mp4/.m3u8',
+      'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    ];
+    return demoStreams[number % demoStreams.length];
+  }
+
+  void _startControlsTimer() {
+    _controlsTimer?.cancel();
+    _controlsTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && _isPlaying && _isLiveMode) {
+        setState(() {
+          _showControls = false;
+        });
+      }
+    });
+  }
+
+  void _resetControlsTimer() {
+    setState(() {
+      _showControls = true;
+    });
+    if (_isLiveMode) _startControlsTimer();
+  }
+
+  @override
+  void dispose() {
+    _controlsTimer?.cancel();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+    _chatController.dispose();
+    _videoController.dispose();
+    super.dispose();
+  }
+
+  void _togglePlayPause() {
+    setState(() {
+      if (_videoController.value.isPlaying) {
+        _videoController.pause();
+        _controlsTimer?.cancel();
+      } else {
+        _videoController.play();
+        if (_isLiveMode) _startControlsTimer();
+      }
+    });
+  }
+
+  void _toggleControls() {
+    if (_showControls) {
+      setState(() {
+        _showControls = false;
+      });
+      _controlsTimer?.cancel();
+    } else {
+      _resetControlsTimer();
+    }
+  }
+
+  // NEW: Toggle between Live and Playback modes
+  void _toggleMode() {
+    setState(() {
+      _isLiveMode = !_isLiveMode;
+      _showControls = !_isLiveMode; // Always show controls in playback mode
+      if (_isLiveMode) {
+        _startControlsTimer();
+      } else {
+        _controlsTimer?.cancel();
+      }
+    });
+  }
+
+  // NEW: Set playback speed
+  void _setPlaybackSpeed(double speed) {
+    setState(() {
+      _playbackSpeed = speed;
+      _videoController.setPlaybackSpeed(speed);
+    });
+  }
+
+  // NEW: Frame-by-frame stepping
+  void _stepFrame(bool forward) {
+    if (_isVideoInitialized) {
+      final currentPosition = _videoController.value.position;
+      final duration = _videoController.value.duration;
+      Duration newPosition;
+
+      if (forward) {
+        newPosition = currentPosition + const Duration(milliseconds: 33); // ~1 frame at 30fps
+        if (newPosition > duration) newPosition = duration;
+      } else {
+        newPosition = currentPosition - const Duration(milliseconds: 33);
+        if (newPosition < Duration.zero) newPosition = Duration.zero;
+      }
+
+      _videoController.seekTo(newPosition);
+    }
+  }
+
+  // NEW: Date/Time picker for playback
+  Future<void> _selectDateTime() async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: _buildSheetHandle(isDark)),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Select Date & Time',
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Date Picker
+                CleanCard(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                        lastDate: DateTime.now(),
+                      );
+                      if (date != null) setState(() => _selectedDate = date);
+                    },
+                    child: Row(
+                      children: [
+                        Icon(CupertinoIcons.calendar, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Date', style: theme.textTheme.bodySmall?.copyWith(color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight)),
+                              Text(DateFormat('MMMM d, yyyy').format(_selectedDate), style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                        ),
+                        Icon(CupertinoIcons.chevron_right, size: 20, color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: AppSpacing.sm),
+
+                // Time Picker
+                CleanCard(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: InkWell(
+                    onTap: () async {
+                      final time = await showTimePicker(
+                        context: context,
+                        initialTime: _selectedTime,
+                      );
+                      if (time != null) setState(() => _selectedTime = time);
+                    },
+                    child: Row(
+                      children: [
+                        Icon(CupertinoIcons.clock, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Time', style: theme.textTheme.bodySmall?.copyWith(color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight)),
+                              Text(_selectedTime.format(context), style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                        ),
+                        Icon(CupertinoIcons.chevron_right, size: 20, color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: AppSpacing.lg),
+
+                // Go to Time Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Loading recording from ${DateFormat('MMM d, h:mm a').format(DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, _selectedTime.hour, _selectedTime.minute))}'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark ? AppColors.mono100Dark : AppColors.mono0,
+                      foregroundColor: isDark ? AppColors.mono0Dark : AppColors.mono100,
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text('Go to Time', style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Video Player
+            _buildVideoPlayer(isDark),
+
+            // NEW: Playback Controls (shown only in playback mode)
+            if (!_isLiveMode) _buildPlaybackControls(theme, isDark),
+
+            // Content below
+            Expanded(
+              child: Container(
+                color: theme.scaffoldBackgroundColor,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildCameraInfo(theme, isDark),
+                      _buildActionBar(theme, isDark),
+                      const SizedBox(height: AppSpacing.lg),
+                      _buildOtherCameras(theme, isDark),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideoPlayer(bool isDark) {
+    return GestureDetector(
+      onTap: _toggleControls,
+      child: AspectRatio(
+        aspectRatio: _isVideoInitialized ? _videoController.value.aspectRatio : 16 / 9,
+        child: Container(
+          color: Colors.black,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Video
+              _isVideoInitialized
+                  ? VideoPlayer(_videoController)
+                  : const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                      ),
+                    ),
+
+              // Gradient overlay - only when controls visible
+              if (_showControls)
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.4),
+                        Colors.transparent,
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.4),
+                      ],
+                      stops: const [0.0, 0.2, 0.8, 1.0],
+                    ),
+                  ),
+                ),
+
+              // Top bar
+              if (_showControls)
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  right: 8,
+                  child: Row(
+                    children: [
+                      _buildControlButton(CupertinoIcons.chevron_left, () => Navigator.pop(context)),
+                      const Spacer(),
+                      // NEW: Live/Playback Toggle
+                      _buildLivePlaybackToggle(isDark),
+                      const SizedBox(width: 8),
+                      // NEW: Grid View Button
+                      _buildControlButton(CupertinoIcons.square_grid_2x2, _showGridView),
+                    ],
+                  ),
+                ),
+
+              // Center play/pause
+              if (_showControls)
+                Center(
+                  child: _buildControlButton(
+                    _isPlaying ? CupertinoIcons.pause_fill : CupertinoIcons.play_fill,
+                    _togglePlayPause,
+                    size: 56,
+                  ),
+                ),
+
+              // Progress bar (Live mode) or Timeline (Playback mode)
+              if (_showControls && _isLiveMode)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildProgressBar(),
+                ),
+
+              if (_showControls && !_isLiveMode)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildTimeline(isDark),
+                ),
+
+              // LIVE badge or Playback indicator
+              Positioned(
+                top: 12,
+                left: 12,
+                child: _isLiveMode ? _buildLiveBadge() : _buildPlaybackBadge(isDark),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // NEW: Live/Playback Toggle
+  Widget _buildLivePlaybackToggle(bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildToggleOption('LIVE', _isLiveMode, true, isDark),
+          _buildToggleOption('PLAYBACK', !_isLiveMode, false, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleOption(String label, bool isActive, bool isLive, bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        if ((isLive && !_isLiveMode) || (!isLive && _isLiveMode)) {
+          _toggleMode();
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.black : Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLiveBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 5,
+            height: 5,
+            decoration: BoxDecoration(
+              color: AppColors.success,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.success.withOpacity(0.5),
+                  blurRadius: 3,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Text(
+            'LIVE',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlaybackBadge(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        DateFormat('MMM d, h:mm a').format(
+          DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, _selectedTime.hour, _selectedTime.minute),
+        ),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildControlButton(IconData icon, VoidCallback onTap, {double size = 32}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.4),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: size * 0.6,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressBar() {
+    final position = _isVideoInitialized ? _videoController.value.position : Duration.zero;
+    final duration = _isVideoInitialized ? _videoController.value.duration : Duration.zero;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Row(
+        children: [
+          Text(
+            _formatDuration(position),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: SliderTheme(
+              data: SliderThemeData(
+                trackHeight: 3,
+                activeTrackColor: Colors.white,
+                inactiveTrackColor: Colors.white.withOpacity(0.3),
+                thumbColor: Colors.white,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+              ),
+              child: Slider(
+                value: _progress.clamp(0.0, 1.0),
+                onChanged: (value) {
+                  setState(() {
+                    _progress = value;
+                    final newPosition = duration * value;
+                    _videoController.seekTo(newPosition);
+                  });
+                  _resetControlsTimer();
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            _formatDuration(duration),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // NEW: Timeline with motion events
+  Widget _buildTimeline(bool isDark) {
+    final position = _isVideoInitialized ? _videoController.value.position : Duration.zero;
+    final duration = _isVideoInitialized ? _videoController.value.duration : Duration.zero;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Motion event markers
+          SizedBox(
+            height: 20,
+            child: Stack(
+              children: _motionEvents.map((eventProgress) {
+                return Positioned(
+                  left: MediaQuery.of(context).size.width * eventProgress - 8,
+                  child: Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Text(
+                _formatDuration(position),
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SliderTheme(
+                  data: SliderThemeData(
+                    trackHeight: 4,
+                    activeTrackColor: Colors.white,
+                    inactiveTrackColor: Colors.white.withOpacity(0.3),
+                    thumbColor: Colors.white,
+                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                  ),
+                  child: Slider(
+                    value: _progress.clamp(0.0, 1.0),
+                    onChanged: (value) {
+                      setState(() {
+                        _progress = value;
+                        _videoController.seekTo(duration * value);
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                _formatDuration(duration),
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // NEW: Playback Controls Bar
+  Widget _buildPlaybackControls(ThemeData theme, bool isDark) {
+    return Container(
+      color: Colors.black,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+      child: Row(
+        children: [
+          // Frame stepping
+          IconButton(
+            icon: const Icon(CupertinoIcons.backward_end_fill, color: Colors.white, size: 20),
+            onPressed: () => _stepFrame(false),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          IconButton(
+            icon: const Icon(CupertinoIcons.forward_end_fill, color: Colors.white, size: 20),
+            onPressed: () => _stepFrame(true),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+
+          const SizedBox(width: AppSpacing.lg),
+
+          // Speed controls
+          _buildSpeedButton('1x', 1.0, isDark),
+          const SizedBox(width: 6),
+          _buildSpeedButton('2x', 2.0, isDark),
+          const SizedBox(width: 6),
+          _buildSpeedButton('4x', 4.0, isDark),
+          const SizedBox(width: 6),
+          _buildSpeedButton('8x', 8.0, isDark),
+
+          const Spacer(),
+
+          // Calendar picker
+          IconButton(
+            icon: const Icon(CupertinoIcons.calendar, color: Colors.white, size: 20),
+            onPressed: _selectDateTime,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpeedButton(String label, double speed, bool isDark) {
+    final isActive = _playbackSpeed == speed;
+    return GestureDetector(
+      onTap: () => _setPlaybackSpeed(speed),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white : Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.black : Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCameraInfo(ThemeData theme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.cameraName,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${widget.cameraId}  ·  ${widget.location}',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionBar(ThemeData theme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildActionItem(CupertinoIcons.info_circle, 'Info', () => _showInfoSheet(theme, isDark), isDark),
+          _buildActionItem(CupertinoIcons.sparkles, 'Summarize', () => _showSummarizeSheet(theme, isDark), isDark),
+          _buildActionItem(CupertinoIcons.arrow_down_circle, 'Download', () => _showDownloadSheet(theme, isDark), isDark),
+          _buildActionItem(CupertinoIcons.camera, 'Snapshot', () => _showSnapshotSheet(theme, isDark), isDark),
+          _buildActionItem(CupertinoIcons.share, 'Share', () => _showShareSheet(theme, isDark), isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionItem(IconData icon, String label, VoidCallback onTap, bool isDark) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: isDark ? Colors.white70 : Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOtherCameras(ThemeData theme, bool isDark) {
+    final cameras = [
+      {'id': 'CAM-02', 'name': 'Parking Lot A', 'location': 'Level 1'},
+      {'id': 'CAM-03', 'name': 'Main Hallway', 'location': 'Floor 2'},
+      {'id': 'CAM-04', 'name': 'Loading Bay', 'location': 'Warehouse'},
+      {'id': 'CAM-05', 'name': 'Office Floor 2', 'location': 'East Wing'},
+      {'id': 'CAM-06', 'name': 'Storage Room', 'location': 'Basement'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Text(
+            'OTHER CAMERAS',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        ...cameras.map((camera) => _buildCameraRow(camera, theme, isDark)),
+        const SizedBox(height: 100),
+      ],
+    );
+  }
+
+  Widget _buildCameraRow(Map<String, String> camera, ThemeData theme, bool isDark) {
+    return InkWell(
+      onTap: () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EnhancedCameraViewerScreen(
+              cameraId: camera['id']!,
+              cameraName: camera['name']!,
+              location: camera['location']!,
+            ),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
+        child: Row(
+          children: [
+            Container(
+              width: 120,
+              height: 68,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: VideoThumbnail(streamUrl: _getStreamUrlForCamera(camera['id']!)),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    camera['name']!,
+                    style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${camera['id']}  ·  ${camera['location']}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              CupertinoIcons.chevron_right,
+              size: 20,
+              color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Bottom Sheets for Actions
+  void _showInfoSheet(ThemeData theme, bool isDark) {
+    final assignedGuards = [
+      {'id': 'G-01', 'name': 'Motion Guard', 'type': 'Motion Detection', 'active': true},
+      {'id': 'G-02', 'name': 'Person Guard', 'type': 'Person Detection', 'active': true},
+      {'id': 'G-03', 'name': 'Intrusion Guard', 'type': 'Area Protection', 'active': false},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSheetHandle(isDark),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Camera Info', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: AppSpacing.lg),
+                    CleanCard(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Column(
+                        children: [
+                          _buildInfoRow('Status', 'Online', AppColors.success, theme, isDark),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildInfoRow('Resolution', '1920x1080', null, theme, isDark),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildInfoRow('Frame Rate', '30 fps', null, theme, isDark),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildInfoRow('Uptime', '12d 5h 23m', null, theme, isDark),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(
+                      'ASSIGNED GUARDS',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    ...assignedGuards.map((guard) => Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: CleanCard(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(CupertinoIcons.shield, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(guard['name'] as String, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${guard['id']}  ·  ${guard['type']}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: (guard['active'] as bool) ? AppColors.success : (isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSummarizeSheet(ThemeData theme, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              _buildSheetHandle(isDark),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'AI Summary',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 28,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(CupertinoIcons.xmark, size: 18, color: isDark ? Colors.white70 : Colors.black54),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Normal activity detected throughout the day. 47 people entered, 45 exited. Peak traffic at 9:15 AM and 5:30 PM. No security incidents reported.',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          height: 1.6,
+                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      _buildKeyMoment('9:15 AM', 'Peak Entry Traffic', '23 people detected entering', CupertinoIcons.arrow_up_right, AppColors.success, theme, isDark),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildKeyMoment('2:34 PM', 'Delivery Vehicle', 'Truck detected at loading dock', CupertinoIcons.car, isDark ? Colors.blue.shade300 : Colors.blue.shade700, theme, isDark),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildKeyMoment('5:30 PM', 'Peak Exit Traffic', '28 people detected exiting', CupertinoIcons.arrow_down_right, AppColors.warning, theme, isDark),
+                      const SizedBox(height: AppSpacing.xl),
+                      _buildDetectionStat(CupertinoIcons.person, 'People', '92', theme, isDark),
+                      Divider(height: AppSpacing.lg, color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
+                      _buildDetectionStat(CupertinoIcons.car, 'Vehicles', '14', theme, isDark),
+                      Divider(height: AppSpacing.lg, color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
+                      _buildDetectionStat(CupertinoIcons.paw, 'Animals', '2', theme, isDark),
+                      Divider(height: AppSpacing.lg, color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
+                      _buildDetectionStat(CupertinoIcons.exclamationmark_triangle, 'Alerts', '0', theme, isDark),
+                      const SizedBox(height: AppSpacing.xl),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildQuickQuestion('What happened at 2 PM?', theme, isDark),
+                          _buildQuickQuestion('Show unusual activity', theme, isDark),
+                          _buildQuickQuestion('Who entered today?', theme, isDark),
+                          _buildQuickQuestion('Compare with yesterday', theme, isDark),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showAIChatSheet(theme, isDark);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              top: BorderSide(color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
+                              bottom: BorderSide(color: isDark ? AppColors.dividerDark : AppColors.dividerLight),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(CupertinoIcons.chat_bubble, size: 22, color: isDark ? Colors.white70 : Colors.black54),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: Text(
+                                  'Ask AI Anything',
+                                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                              Icon(CupertinoIcons.chevron_right, size: 20, color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKeyMoment(String time, String title, String description, IconData icon, Color color, ThemeData theme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 60,
+            child: Text(
+              time,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetectionStat(IconData icon, String label, String value, ThemeData theme, bool isDark) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+            ),
+          ),
+        ),
+        Text(value, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+
+  Widget _buildQuickQuestion(String question, ThemeData theme, bool isDark) {
+    return GestureDetector(
+      onTap: () {},
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          question,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAIChatSheet(ThemeData theme, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              _buildSheetHandle(isDark),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(CupertinoIcons.chat_bubble, size: 18, color: isDark ? Colors.white70 : Colors.black54),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('AI Chat', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                          Text(
+                            'Ask anything about this camera',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(CupertinoIcons.xmark, size: 18, color: isDark ? Colors.white70 : Colors.black54),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1)),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  itemCount: _chatMessages.length,
+                  itemBuilder: (context, index) {
+                    final msg = _chatMessages[index];
+                    return _buildChatMessage(msg['message'], msg['isUser'], msg['time'], theme, isDark);
+                  },
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+                  border: Border(
+                    top: BorderSide(
+                      color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.06),
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.md,
+                  right: AppSpacing.md,
+                  top: AppSpacing.sm,
+                  bottom: AppSpacing.sm,
+                ),
+                child: SafeArea(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _chatController,
+                          decoration: InputDecoration(
+                            hintText: 'Message',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide.none,
+                            ),
+                            filled: true,
+                            fillColor: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: AppSpacing.sm,
+                            ),
+                            isDense: true,
+                          ),
+                          maxLines: null,
+                          onSubmitted: (_) => _sendMessage(),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.mono100Dark : AppColors.mono0,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            CupertinoIcons.arrow_up,
+                            color: isDark ? AppColors.mono0Dark : AppColors.mono100,
+                          ),
+                          onPressed: _sendMessage,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDownloadSheet(ThemeData theme, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSheetHandle(isDark),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Download', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildOption(CupertinoIcons.videocam_fill, 'Download Full Video', '18:45  ·  245 MB', theme, isDark),
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildOption(CupertinoIcons.scissors, 'Download Clip', 'Select time range', theme, isDark),
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildOption(CupertinoIcons.checkmark_seal_fill, 'Download HD', '18:45  ·  680 MB', theme, isDark),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSnapshotSheet(ThemeData theme, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSheetHandle(isDark),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Snapshots', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(CupertinoIcons.camera_fill, size: 14, color: isDark ? Colors.white70 : Colors.black87),
+                            const SizedBox(width: 4),
+                            Text('Capture', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.black87)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: AppSpacing.sm,
+                      mainAxisSpacing: AppSpacing.sm,
+                    ),
+                    itemCount: 6,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Stack(
+                          children: [
+                            Center(child: Icon(CupertinoIcons.photo, size: 32, color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1))),
+                            Positioned(
+                              bottom: 6,
+                              right: 6,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), borderRadius: BorderRadius.circular(3)),
+                                child: Text('${index + 1}h', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w500)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showShareSheet(ThemeData theme, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSheetHandle(isDark),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Share', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildOption(CupertinoIcons.link, 'Copy Link', 'Share video link', theme, isDark),
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildOption(CupertinoIcons.qrcode, 'QR Code', 'Generate QR code', theme, isDark),
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildOption(CupertinoIcons.mail, 'Email', 'Send via email', theme, isDark),
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildOption(CupertinoIcons.ellipsis, 'More', 'Other options', theme, isDark),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // NEW: Show Grid View
+  void _showGridView() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const MultiCameraGridScreen(),
+      ),
+    );
+  }
+
+  Widget _buildSheetHandle(bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8, bottom: 4),
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, Color? valueColor, ThemeData theme, bool isDark) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight)),
+        Row(
+          children: [
+            if (valueColor != null)
+              Container(
+                width: 6,
+                height: 6,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(color: valueColor, shape: BoxShape.circle),
+              ),
+            Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600, color: valueColor)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOption(IconData icon, String title, String subtitle, ThemeData theme, bool isDark) {
+    return CleanCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+                const SizedBox(height: 2),
+                Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight)),
+              ],
+            ),
+          ),
+          Icon(CupertinoIcons.chevron_right, size: 20, color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatMessage(String message, bool isUser, String time, ThemeData theme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Row(
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isUser) ...[
+            Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm + 2,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Text(
+                message,
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+          ] else ...[
+            Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm + 2,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.mono100Dark : AppColors.mono0,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Text(
+                message,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: isDark ? AppColors.mono0Dark : AppColors.mono100,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _sendMessage() {
+    if (_chatController.text.trim().isEmpty) return;
+
+    setState(() {
+      _chatMessages.add({
+        'isUser': true,
+        'message': _chatController.text,
+        'time': '10:${30 + _chatMessages.length} AM',
+      });
+
+      Future.delayed(const Duration(milliseconds: 500), () {
+        setState(() {
+          _chatMessages.add({
+            'isUser': false,
+            'message': 'I can help analyze this feed for activity patterns, detected objects, and security alerts.',
+            'time': '10:${31 + _chatMessages.length} AM',
+          });
+        });
+      });
+    });
+
+    _chatController.clear();
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    return '${twoDigits(duration.inMinutes.remainder(60))}:${twoDigits(duration.inSeconds.remainder(60))}';
+  }
+}
+
+/// Multi-Camera Grid View with Live/Playback Support
+class MultiCameraGridScreen extends StatefulWidget {
+  const MultiCameraGridScreen({super.key});
+
+  @override
+  State<MultiCameraGridScreen> createState() => _MultiCameraGridScreenState();
+}
+
+class _MultiCameraGridScreenState extends State<MultiCameraGridScreen> {
+  bool _isLiveMode = true;
+  int _gridSize = 4; // 1, 4, 9, or 16 cameras
+  final List<VideoPlayerController> _controllers = [];
+  final List<bool> _initialized = [];
+
+  final List<Map<String, dynamic>> _cameras = [
+    {'id': 'CAM-01', 'name': 'Front Entrance', 'online': true},
+    {'id': 'CAM-02', 'name': 'Parking Lot', 'online': true},
+    {'id': 'CAM-03', 'name': 'Main Hallway', 'online': true},
+    {'id': 'CAM-04', 'name': 'Loading Bay', 'online': false},
+    {'id': 'CAM-05', 'name': 'Office Floor 2', 'online': true},
+    {'id': 'CAM-06', 'name': 'Storage Room', 'online': true},
+    {'id': 'CAM-07', 'name': 'Cafeteria', 'online': true},
+    {'id': 'CAM-08', 'name': 'Server Room', 'online': true},
+    {'id': 'CAM-09', 'name': 'East Wing', 'online': true},
+    {'id': 'CAM-10', 'name': 'West Wing', 'online': false},
+    {'id': 'CAM-11', 'name': 'Rooftop', 'online': true},
+    {'id': 'CAM-12', 'name': 'Garage', 'online': true},
+    {'id': 'CAM-13', 'name': 'Lobby', 'online': true},
+    {'id': 'CAM-14', 'name': 'Stairwell A', 'online': true},
+    {'id': 'CAM-15', 'name': 'Stairwell B', 'online': true},
+    {'id': 'CAM-16', 'name': 'Emergency Exit', 'online': true},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeControllers();
+  }
+
+  void _initializeControllers() {
+    final demoStreams = [
+      'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8',
+      'https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8',
+      'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
+      'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.mp4/.m3u8',
+    ];
+
+    for (int i = 0; i < _gridSize; i++) {
+      if (_cameras[i]['online'] as bool) {
+        final controller = VideoPlayerController.networkUrl(
+          Uri.parse(demoStreams[i % demoStreams.length]),
+        );
+        _controllers.add(controller);
+        _initialized.add(false);
+
+        controller.initialize().then((_) {
+          controller.setLooping(true);
+          controller.setVolume(0);
+          controller.play();
+          if (mounted) {
+            setState(() => _initialized[i] = true);
+          }
+        });
+      } else {
+        _controllers.add(VideoPlayerController.networkUrl(Uri.parse(demoStreams[0])));
+        _initialized.add(false);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _changeGridSize(int size) {
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    setState(() {
+      _gridSize = size;
+      _controllers.clear();
+      _initialized.clear();
+    });
+    _initializeControllers();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.chevron_left, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Multi-Camera View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        actions: [
+          PopupMenuButton<int>(
+            icon: const Icon(CupertinoIcons.square_grid_2x2, color: Colors.white),
+            onSelected: _changeGridSize,
+            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+            itemBuilder: (context) => [
+              _buildGridMenuItem(1, '1 Camera', isDark),
+              _buildGridMenuItem(4, '2×2 Grid', isDark),
+              _buildGridMenuItem(9, '3×3 Grid', isDark),
+              _buildGridMenuItem(16, '4×4 Grid', isDark),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: _buildModeToggle(isDark),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: GridView.builder(
+          padding: const EdgeInsets.all(4),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: _gridSize == 1 ? 1 : (_gridSize == 4 ? 2 : (_gridSize == 9 ? 3 : 4)),
+            crossAxisSpacing: 4,
+            mainAxisSpacing: 4,
+          ),
+          itemCount: _gridSize,
+          itemBuilder: (context, index) => _buildCameraCell(index, isDark),
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<int> _buildGridMenuItem(int value, String label, bool isDark) {
+    return PopupMenuItem<int>(
+      value: value,
+      child: Row(
+        children: [
+          if (_gridSize == value)
+            Icon(CupertinoIcons.checkmark, size: 16, color: isDark ? Colors.white : Colors.black),
+          if (_gridSize == value) const SizedBox(width: 8),
+          Text(label, style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModeToggle(bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildModeOption('LIVE', _isLiveMode, isDark),
+          _buildModeOption('PLAYBACK', !_isLiveMode, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModeOption(String label, bool isActive, bool isDark) {
+    return GestureDetector(
+      onTap: () => setState(() => _isLiveMode = !_isLiveMode),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.black : Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCameraCell(int index, bool isDark) {
+    final camera = _cameras[index];
+    final isOnline = camera['online'] as bool;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EnhancedCameraViewerScreen(
+              cameraId: camera['id'] as String,
+              cameraName: camera['name'] as String,
+              location: 'Building A',
+            ),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black,
+          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (isOnline && _initialized.length > index && _initialized[index])
+              VideoPlayer(_controllers[index])
+            else if (isOnline)
+              const Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            else
+              Container(
+                color: const Color(0xFF1C1C1E),
+                child: const Center(
+                  child: Icon(CupertinoIcons.videocam_fill, color: Colors.white24, size: 32),
+                ),
+              ),
+
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      camera['name'] as String,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      camera['id'] as String,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isOnline ? AppColors.success : Colors.grey,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      isOnline ? 'LIVE' : 'OFF',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

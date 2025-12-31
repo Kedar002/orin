@@ -4,7 +4,7 @@ import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/clean_card.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/space_model.dart';
-import '../cameras/camera_viewer_screen.dart';
+import '../cameras/enhanced_camera_viewer_screen.dart';
 
 /// Space Detail Screen - Clean Apple-style hierarchical navigation
 class SpaceDetailScreen extends StatefulWidget {
@@ -491,7 +491,7 @@ class _SpaceDetailScreenState extends State<SpaceDetailScreen> {
   void _navigateToCamera(CameraItem camera) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => CameraViewerScreen(
+        builder: (context) => EnhancedCameraViewerScreen(
           cameraId: camera.id,
           cameraName: camera.name,
           location: camera.location,

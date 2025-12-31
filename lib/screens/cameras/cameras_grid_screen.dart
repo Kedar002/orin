@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../core/constants/security_colors.dart';
-import 'camera_viewer_screen.dart';
+import 'enhanced_camera_viewer_screen.dart';
 
 /// Full Screen Grid View of All Cameras
 class CamerasGridScreen extends StatefulWidget {
@@ -175,7 +175,7 @@ class _CamerasGridScreenState extends State<CamerasGridScreen> {
         if (isOnline) {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => CameraViewerScreen(
+              builder: (context) => EnhancedCameraViewerScreen(
                 cameraId: camera['id'],
                 cameraName: camera['name'],
                 location: camera['location'],

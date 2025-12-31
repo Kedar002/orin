@@ -10,7 +10,7 @@ import '../../models/guard_model.dart';
 import '../../models/catch_model.dart';
 import '../../repositories/guards_repository.dart';
 import '../../repositories/catches_repository.dart';
-import '../cameras/camera_viewer_screen.dart';
+import '../cameras/enhanced_camera_viewer_screen.dart';
 import '../cameras/cameras_grid_screen.dart';
 import '../guards/guard_detail_screen.dart';
 import '../events/event_detail_screen.dart';
@@ -268,7 +268,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => CameraViewerScreen(
+            builder: (context) => EnhancedCameraViewerScreen(
               cameraId: camera['id'],
               cameraName: camera['name'],
               location: 'Main Building',
